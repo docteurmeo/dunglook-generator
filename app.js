@@ -180,16 +180,17 @@
 
   async function compose(choices, text, opts = {}) {
     const finalized = !!opts.finalized;
-    const forDownload = !!opts.forDownload;
 
     const svg = document.createElementNS(SVG_NS, 'svg');
     svg.setAttribute('xmlns', SVG_NS);
     svg.setAttribute('viewBox', `0 0 ${ART_W} ${ART_H}`);
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
-    // Background — light blue card for finalized/download, transparent otherwise
-    if (finalized || forDownload) {
+    // Light blue card background — preview only. Stripped on download via the
+    // finalizedBg id (we want transparent SVG/PNG so users can place over any bg).
+    if (finalized) {
       const bg = document.createElementNS(SVG_NS, 'rect');
+      bg.setAttribute('id', 'finalizedBg');
       bg.setAttribute('x', '0');
       bg.setAttribute('y', '0');
       bg.setAttribute('width', String(ART_W));
@@ -238,7 +239,7 @@
     const tFrame = state.manifest?.textFrame || { x: 263, y: 500, width: 174, height: 164 };
     const tx = tFrame.x + tFrame.width / 2;
     const fontDisplay = '"BD StreetSign Sans", "Bagel Fat One", system-ui, sans-serif';
-    const coreColor = (finalized || forDownload) ? '#000000' : '#ffffff';
+    const coreColor = finalized ? '#000000' : '#ffffff';
 
     const mkText = (str, y, size, color, upper) => {
       const t = document.createElementNS(SVG_NS, 'text');
@@ -354,6 +355,7 @@
     }
 
     for (const child of CANVAS.childNodes) {
+      if (child.id === 'finalizedBg') continue;
       clone.appendChild(child.cloneNode(true));
     }
     return clone;
