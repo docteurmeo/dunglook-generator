@@ -50,6 +50,30 @@
     return txt;
   }
 
+  // Fetches BD StreetSign Sans once and caches as base64 data URL.
+  // Must be embedded in download SVG because Canvas-rendered SVG-as-image
+  // runs in a sandbox and can't reach the page's @font-face declarations.
+  let _fontDataUrl = null;
+  async function getFontDataUrl() {
+    if (_fontDataUrl !== null) return _fontDataUrl;
+    try {
+      const res = await fetch('fonts/BDStreetSignSans_Variable.ttf');
+      if (!res.ok) throw new Error('font fetch failed: ' + res.status);
+      const buf = await res.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let binary = '';
+      const CHUNK = 0x8000;
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+      }
+      _fontDataUrl = 'data:font/ttf;base64,' + btoa(binary);
+    } catch (e) {
+      console.warn('[dunglook] font embed failed:', e);
+      _fontDataUrl = '';
+    }
+    return _fontDataUrl;
+  }
+
   // ---------- random selection ----------
 
   function chooseLayerAssets(manifest) {
@@ -313,15 +337,25 @@
 
   async function buildDownloadSvg() {
     if (!state.manifest) return null;
-    // Re-compose with forDownload flag using the CURRENT canvas state.
-    // We re-read the rendered DOM (which has the finalized look) — clone it.
     const clone = document.createElementNS(SVG_NS, 'svg');
     clone.setAttribute('xmlns', SVG_NS);
     clone.setAttribute('viewBox', `0 0 ${ART_W} ${ART_H}`);
+
+    const fontUrl = await getFontDataUrl();
+    if (fontUrl) {
+      const defs = document.createElementNS(SVG_NS, 'defs');
+      const style = document.createElementNS(SVG_NS, 'style');
+      style.textContent =
+        '@font-face{font-family:"BD StreetSign Sans";' +
+        'src:url(' + fontUrl + ') format("truetype");' +
+        'font-weight:100 900;font-style:normal;}';
+      defs.appendChild(style);
+      clone.appendChild(defs);
+    }
+
     for (const child of CANVAS.childNodes) {
       clone.appendChild(child.cloneNode(true));
     }
-    // Strip border (canvas-wrap border is CSS, not in SVG, so already absent)
     return clone;
   }
 
@@ -351,14 +385,16 @@
 
     const SCALE = 2; // 1400x1400 PNG for crisp output
     const img = new Image();
-    img.crossOrigin = 'anonymous';
     img.decoding = 'async';
+    img.src = url;
 
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = () => reject(new Error('PNG render: image load failed'));
-      img.src = url;
-    });
+    try {
+      await img.decode();
+    } catch (e) {
+      URL.revokeObjectURL(url);
+      console.error('[dunglook] PNG decode failed:', e);
+      return;
+    }
 
     const canvas = document.createElement('canvas');
     canvas.width = ART_W * SCALE;
