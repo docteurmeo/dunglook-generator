@@ -3,6 +3,15 @@
    Design tokens lifted from Figma. Override later if needed.
    ============================================================ */
 
+@font-face {
+  font-family: "BD StreetSign Sans";
+  src: url("fonts/BDStreetSignSans_Variable.ttf") format("truetype-variations"),
+       url("fonts/BDStreetSignSans_Variable.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* Colors */
   --bg-page: #050505;
@@ -23,7 +32,7 @@
   --frame-radius: 37px;
 
   /* Typography */
-  --font-display: "Bagel Fat One", "BD StreetSign Sans", system-ui, sans-serif;
+  --font-display: "BD StreetSign Sans", "Bagel Fat One", system-ui, sans-serif;
   --font-text: "Be Vietnam Pro", "BD StreetSign Sans", system-ui, sans-serif;
 }
 
@@ -43,7 +52,7 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   display: grid;
-  grid-template-rows: auto 1fr auto auto;
+  grid-template-rows: auto 1fr auto;
   gap: clamp(8px, 1.5vh, 24px);
   padding: 0 16px env(safe-area-inset-bottom);
 }
@@ -246,20 +255,6 @@ body {
 .link-btn:active { transform: scale(0.96); }
 .link-btn:focus-visible { outline: 2px solid var(--border-card); outline-offset: 2px; }
 .dot { color: var(--text-counter); user-select: none; }
-
-/* ============================================================
-   Status
-   ============================================================ */
-.status {
-  text-align: center;
-  font-size: 12px;
-  color: var(--text-counter);
-  padding: 0 16px 12px;
-  min-height: 18px;
-  font-family: var(--font-text);
-}
-.status.error { color: #ff5d4d; }
-.status.empty { color: var(--text-on-dark); opacity: 0.7; }
 
 /* ============================================================
    Responsive

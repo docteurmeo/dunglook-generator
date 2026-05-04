@@ -8,7 +8,6 @@
   const $ = (id) => document.getElementById(id);
   const CANVAS = $('canvas');
   const CANVAS_WRAP = $('canvasWrap');
-  const STATUS = $('status');
   const COUNTER = $('counterLabel');
   const GEN_BTN = $('generateBtn');
   const GEN_LABEL = GEN_BTN.querySelector('.btn-label');
@@ -26,12 +25,6 @@
   };
 
   // ---------- helpers ----------
-
-  function setStatus(msg, kind) {
-    STATUS.textContent = msg || '';
-    STATUS.classList.toggle('error', kind === 'error');
-    STATUS.classList.toggle('empty', kind === 'empty');
-  }
 
   function pickRandom(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
@@ -220,7 +213,7 @@
     // Line order in design: prefix top (y≈10), core middle (y≈45), suffix bottom (y≈109-119)
     const tFrame = state.manifest?.textFrame || { x: 263, y: 500, width: 174, height: 164 };
     const tx = tFrame.x + tFrame.width / 2;
-    const fontDisplay = '"Bagel Fat One", "BD StreetSign Sans", system-ui, sans-serif';
+    const fontDisplay = '"BD StreetSign Sans", "Bagel Fat One", system-ui, sans-serif';
     const coreColor = (finalized || forDownload) ? '#000000' : '#ffffff';
 
     const mkText = (str, y, size, color, upper) => {
@@ -413,25 +406,13 @@
         0
       );
       if (total === 0) {
-        setStatus(
-          'Chưa có SVG. Drop file .svg vào assets/01_base, 02_eyes, 03_sticker rồi push GitHub. Action sẽ tự rebuild trong ~1 phút.',
-          'empty'
-        );
+        console.warn('[dunglook] No SVG assets found. Drop files into assets/01_base, 02_eyes, 03_sticker.');
         return;
       }
-      const tx = state.manifest.text || {};
-      const cl = state.manifest.colors || [];
-      setStatus(
-        `${state.manifest.layers.length} lớp · ${total} svg · ${(tx.prefix || []).length}+${(tx.suffix || []).length} text · ${cl.length} màu`
-      );
       await renderRandom({ finalized: false });
       startAutoShuffle();
     } catch (e) {
-      console.error(e);
-      setStatus(
-        'Không tải được data/manifest.json. Đợi GitHub Action build xong rồi reload.',
-        'error'
-      );
+      console.error('[dunglook] manifest load failed:', e);
     }
   })();
 })();
