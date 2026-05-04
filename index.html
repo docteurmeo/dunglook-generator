@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>ĐÚNG LOOK</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">ĐÚNG LOOK</div>
+    <div class="counter">GEN <span id="counterLabel">0</span></div>
+  </header>
+
+  <main class="stage">
+    <div class="canvas-wrap" id="canvasWrap">
+      <svg id="canvas" viewBox="0 0 1024 1280" xmlns="http://www.w3.org/2000/svg"
+           preserveAspectRatio="xMidYMid meet" aria-label="Sticker"></svg>
+    </div>
+  </main>
+
+  <div class="controls">
+    <button id="generateBtn" class="btn primary">GENERATE</button>
+    <button id="shuffleBtn" class="btn primary hidden">SHUFFLE LẠI</button>
+    <button id="downloadBtn" class="btn secondary hidden">DOWNLOAD SVG</button>
+    <button id="qrBtn" class="btn secondary hidden">QR CODE</button>
+  </div>
+
+  <div id="status" class="status">Đang tải…</div>
+
+  <div id="qrModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
+    <div class="modal-bg" data-close></div>
+    <div class="modal-card">
+      <div class="modal-title" id="qrTitle">Quét bằng điện thoại</div>
+      <div id="qrContainer"></div>
+      <div id="qrNote" class="modal-note"></div>
+      <button id="qrCloseBtn" class="btn secondary" data-close>Đóng</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "dunglook-generator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ĐÚNG LOOK Generator — sticker generator cho RIO Sustainable Branding (booth triển lãm)",
+  "scripts": {
+    "build": "node scripts/build.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  }
+}

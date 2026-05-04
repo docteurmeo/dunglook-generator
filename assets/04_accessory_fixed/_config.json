@@ -1,0 +1,10 @@
+{
+  "name": "Fixed Accessory",
+  "order": 4,
+  "behavior": "random_angle",
+  "required": false,
+  "probability": 0.75,
+  "viewBox": "0 0 1024 1024",
+  "anchor": { "x": 850, "y": 174 },
+  "angleSteps": [0, 45, 90, 135, 180, 225, 270, 315]
+}

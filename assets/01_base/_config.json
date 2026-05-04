@@ -1,0 +1,8 @@
+{
+  "name": "Base",
+  "order": 1,
+  "behavior": "fixed_center",
+  "required": true,
+  "probability": 1.0,
+  "viewBox": "0 0 1024 1024"
+}
