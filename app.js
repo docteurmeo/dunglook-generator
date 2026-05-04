@@ -2,9 +2,8 @@
   'use strict';
 
   const SVG_NS = 'http://www.w3.org/2000/svg';
-  const ART_SIZE = 1024;
-  const TEXT_AREA_H = 256;
-  const TOTAL_H = ART_SIZE + TEXT_AREA_H;
+  const ART_W = 700;
+  const ART_H = 700;
 
   const $ = (id) => document.getElementById(id);
   const CANVAS = $('canvas');
@@ -12,12 +11,10 @@
   const STATUS = $('status');
   const COUNTER = $('counterLabel');
   const GEN_BTN = $('generateBtn');
-  const SHF_BTN = $('shuffleBtn');
-  const DL_BTN = $('downloadBtn');
-  const QR_BTN = $('qrBtn');
-  const QR_MODAL = $('qrModal');
-  const QR_CONTAINER = $('qrContainer');
-  const QR_NOTE = $('qrNote');
+  const GEN_LABEL = GEN_BTN.querySelector('.btn-label');
+  const DL_GROUP = $('downloadGroup');
+  const DL_SVG = $('downloadSvgBtn');
+  const DL_PNG = $('downloadPngBtn');
 
   const state = {
     manifest: null,
@@ -30,9 +27,10 @@
 
   // ---------- helpers ----------
 
-  function setStatus(msg, isError = false) {
+  function setStatus(msg, kind) {
     STATUS.textContent = msg || '';
-    STATUS.classList.toggle('error', isError);
+    STATUS.classList.toggle('error', kind === 'error');
+    STATUS.classList.toggle('empty', kind === 'empty');
   }
 
   function pickRandom(arr) {
@@ -40,8 +38,8 @@
   }
 
   function parseViewBox(vb) {
-    const parts = String(vb || '0 0 1024 1024').trim().split(/\s+/).map(Number);
-    return { x: parts[0] || 0, y: parts[1] || 0, w: parts[2] || 1024, h: parts[3] || 1024 };
+    const p = String(vb || '0 0 100 100').trim().split(/\s+/).map(Number);
+    return { x: p[0] || 0, y: p[1] || 0, w: p[2] || 100, h: p[3] || 100 };
   }
 
   async function fetchManifest() {
@@ -69,63 +67,124 @@
       if (!include) continue;
 
       const pick = pickRandom(layer.assets);
-      const vb = parseViewBox(layer.viewBox);
-      let transform = '';
+      const placement = computePlacement(layer);
+      const recolor = layer.colorize && manifest.colors?.length
+        ? pickRandom(manifest.colors)
+        : null;
 
-      if (layer.behavior === 'random_position') {
-        const r = layer.positionRange || { xMin: 150, xMax: 874, yMin: 150, yMax: 874 };
-        const cx = r.xMin + Math.random() * (r.xMax - r.xMin);
-        const cy = r.yMin + Math.random() * (r.yMax - r.yMin);
-        const dx = cx - (vb.x + vb.w / 2);
-        const dy = cy - (vb.y + vb.h / 2);
-        transform = `translate(${dx} ${dy})`;
-      } else if (layer.behavior === 'random_angle') {
-        const steps = layer.angleSteps || [0, 45, 90, 135, 180, 225, 270, 315];
-        const angle = pickRandom(steps);
-        const a = layer.anchor || { x: 850, y: 174 };
-        const cx = vb.x + vb.w / 2;
-        const cy = vb.y + vb.h / 2;
-        transform = `translate(${a.x - cx} ${a.y - cy}) rotate(${angle} ${cx} ${cy})`;
-      } else if (layer.behavior === 'fixed_position' && layer.anchor) {
-        const dx = layer.anchor.x - (vb.x + vb.w / 2);
-        const dy = layer.anchor.y - (vb.y + vb.h / 2);
-        transform = `translate(${dx} ${dy})`;
-      }
-      // fixed_center → no transform
-
-      out.push({ layer, asset: pick, transform });
+      out.push({ layer, asset: pick, placement, recolor });
     }
     return out;
   }
 
+  function computePlacement(layer) {
+    // Returns { x, y, width, height, rotate } in art-frame coordinates (700x700)
+    if (layer.behavior === 'fixed_center') {
+      const off = layer.renderOffset || { x: 100, y: 0 };
+      const sz = typeof layer.renderSize === 'number'
+        ? { width: layer.renderSize, height: layer.renderSize }
+        : layer.renderSize || { width: 500, height: 500 };
+      return { x: off.x, y: off.y, width: sz.width, height: sz.height, rotate: 0 };
+    }
+    if (layer.behavior === 'fixed_position' && layer.anchor) {
+      const sz = layer.renderSize || { width: 400, height: 180 };
+      return {
+        x: layer.anchor.x - sz.width / 2,
+        y: layer.anchor.y - sz.height / 2,
+        width: sz.width,
+        height: sz.height,
+        rotate: 0
+      };
+    }
+    if (layer.behavior === 'random_corner') {
+      const sz = layer.renderSize || { width: 140, height: 140 };
+      const c = layer.container || { left: 100, top: 0, width: 500, height: 500 };
+      const pad = layer.padding ?? 60;
+      const corners = [
+        { x: c.left + pad,                       y: c.top + pad },
+        { x: c.left + c.width - sz.width - pad,  y: c.top + pad },
+        { x: c.left + pad,                       y: c.top + c.height - sz.height - pad },
+        { x: c.left + c.width - sz.width - pad,  y: c.top + c.height - sz.height - pad }
+      ];
+      const corner = pickRandom(corners);
+      const rot = layer.rotation || { mode: 'continuous', min: -45, max: 45 };
+      let angle = 0;
+      if (rot.mode === 'steps' && Array.isArray(rot.steps)) {
+        angle = pickRandom(rot.steps);
+      } else {
+        const min = rot.min ?? -45;
+        const max = rot.max ?? 45;
+        angle = min + Math.random() * (max - min);
+      }
+      return { x: corner.x, y: corner.y, width: sz.width, height: sz.height, rotate: angle };
+    }
+    return { x: 0, y: 0, width: 500, height: 500, rotate: 0 };
+  }
+
   function chooseText(manifest) {
     const t = manifest.text || { prefix: [], suffix: [] };
+    const c = manifest.colors || [];
     return {
-      prefix: t.prefix && t.prefix.length ? pickRandom(t.prefix) : '',
-      core: 'ĐÚNG LOOK',
-      suffix: t.suffix && t.suffix.length ? pickRandom(t.suffix) : ''
+      prefix: t.prefix?.length ? pickRandom(t.prefix) : '',
+      core: manifest.coreText || 'đúng look',
+      suffix: t.suffix?.length ? pickRandom(t.suffix) : '',
+      prefixColor: c.length ? pickRandom(c) : '#009ada',
+      suffixColor: c.length ? pickRandom(c) : '#f99d1c'
     };
   }
 
   // ---------- SVG composition ----------
 
-  async function compose(choices, text) {
+  function recolorSvgGroup(group, color) {
+    const els = group.querySelectorAll(
+      'path, rect, circle, ellipse, polygon, polyline, line'
+    );
+    els.forEach((el) => {
+      const fill = el.getAttribute('fill');
+      const stroke = el.getAttribute('stroke');
+      // Only override visible fills (skip "none" and unspecified-with-stroke)
+      if (fill !== 'none' && fill !== null) {
+        el.setAttribute('fill', color);
+      } else if (fill === null && (!stroke || stroke === 'none')) {
+        el.setAttribute('fill', color);
+      }
+    });
+    // Clear inline style fills
+    els.forEach((el) => {
+      const s = el.getAttribute('style');
+      if (s && /fill\s*:/.test(s)) {
+        el.setAttribute(
+          'style',
+          s.replace(/fill\s*:\s*[^;]+;?/g, '').trim()
+        );
+      }
+    });
+  }
+
+  async function compose(choices, text, opts = {}) {
+    const finalized = !!opts.finalized;
+    const forDownload = !!opts.forDownload;
+
     const svg = document.createElementNS(SVG_NS, 'svg');
     svg.setAttribute('xmlns', SVG_NS);
-    svg.setAttribute('viewBox', `0 0 ${ART_SIZE} ${TOTAL_H}`);
+    svg.setAttribute('viewBox', `0 0 ${ART_W} ${ART_H}`);
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
-    // White background
-    const bg = document.createElementNS(SVG_NS, 'rect');
-    bg.setAttribute('x', '0');
-    bg.setAttribute('y', '0');
-    bg.setAttribute('width', String(ART_SIZE));
-    bg.setAttribute('height', String(TOTAL_H));
-    bg.setAttribute('fill', '#ffffff');
-    svg.appendChild(bg);
+    // Background — light blue card for finalized/download, transparent otherwise
+    if (finalized || forDownload) {
+      const bg = document.createElementNS(SVG_NS, 'rect');
+      bg.setAttribute('x', '0');
+      bg.setAttribute('y', '0');
+      bg.setAttribute('width', String(ART_W));
+      bg.setAttribute('height', String(ART_H));
+      bg.setAttribute('rx', '37');
+      bg.setAttribute('ry', '37');
+      bg.setAttribute('fill', '#d3e8f0');
+      svg.appendChild(bg);
+    }
 
-    // Layer groups
-    for (const { layer, asset, transform } of choices) {
+    // Layers
+    for (const { layer, asset, placement, recolor } of choices) {
       const txt = await fetchSvgText(asset.path).catch(() => null);
       if (!txt) continue;
 
@@ -133,46 +192,67 @@
       const src = doc.documentElement;
       if (src.nodeName.toLowerCase() !== 'svg') continue;
 
-      const g = document.createElementNS(SVG_NS, 'g');
-      g.setAttribute('class', `layer ${layer.folder}`);
-      if (transform) g.setAttribute('transform', transform);
+      const srcVb = parseViewBox(src.getAttribute('viewBox') || layer.viewBox);
+      const sx = placement.width / srcVb.w;
+      const sy = placement.height / srcVb.h;
+      const cx = placement.x + placement.width / 2;
+      const cy = placement.y + placement.height / 2;
+
+      // Outer transform: position + rotate around center
+      const outer = document.createElementNS(SVG_NS, 'g');
+      outer.setAttribute(
+        'transform',
+        `translate(${placement.x} ${placement.y}) rotate(${placement.rotate || 0} ${placement.width / 2} ${placement.height / 2}) scale(${sx} ${sy}) translate(${-srcVb.x} ${-srcVb.y})`
+      );
+      outer.setAttribute('class', `layer ${layer.folder}`);
 
       while (src.firstChild) {
-        g.appendChild(document.importNode(src.firstChild, true));
+        outer.appendChild(document.importNode(src.firstChild, true));
         src.removeChild(src.firstChild);
       }
-      svg.appendChild(g);
+
+      if (recolor) recolorSvgGroup(outer, recolor);
+
+      svg.appendChild(outer);
     }
 
-    // Text 3 lines
-    const tx = ART_SIZE / 2;
-    const fontStack =
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif';
-    const mkText = (str, y, size, weight) => {
+    // Text 3 lines (positions from Figma textFrame at 263, 500 — 174x164)
+    // Line order in design: prefix top (y≈10), core middle (y≈45), suffix bottom (y≈109-119)
+    const tFrame = state.manifest?.textFrame || { x: 263, y: 500, width: 174, height: 164 };
+    const tx = tFrame.x + tFrame.width / 2;
+    const fontDisplay = '"Bagel Fat One", "BD StreetSign Sans", system-ui, sans-serif';
+    const coreColor = (finalized || forDownload) ? '#000000' : '#ffffff';
+
+    const mkText = (str, y, size, color, upper) => {
       const t = document.createElementNS(SVG_NS, 'text');
       t.setAttribute('x', String(tx));
       t.setAttribute('y', String(y));
       t.setAttribute('text-anchor', 'middle');
-      t.setAttribute('font-family', fontStack);
+      t.setAttribute('dominant-baseline', 'hanging');
+      t.setAttribute('font-family', fontDisplay);
       t.setAttribute('font-size', String(size));
-      t.setAttribute('font-weight', String(weight));
-      t.setAttribute('fill', '#111');
-      t.textContent = str;
+      t.setAttribute('fill', color);
+      if (upper) t.setAttribute('style', 'text-transform: uppercase');
+      t.textContent = upper ? String(str).toUpperCase() : str;
       return t;
     };
 
-    if (text.prefix) svg.appendChild(mkText(text.prefix, ART_SIZE + 70, 44, 500));
-    svg.appendChild(mkText(text.core, ART_SIZE + 150, 80, 800));
-    if (text.suffix) svg.appendChild(mkText(text.suffix, ART_SIZE + 230, 44, 500));
+    if (text.prefix) {
+      svg.appendChild(mkText(text.prefix, tFrame.y + 10, 32, text.prefixColor, true));
+    }
+    svg.appendChild(mkText(text.core, tFrame.y + 55, 48, coreColor, false));
+    if (text.suffix) {
+      svg.appendChild(mkText(text.suffix, tFrame.y + 119, 32, text.suffixColor, true));
+    }
 
     return svg;
   }
 
-  async function renderRandom() {
+  async function renderRandom(opts = {}) {
     if (!state.manifest) return null;
     const choices = chooseLayerAssets(state.manifest);
     const text = chooseText(state.manifest);
-    const svg = await compose(choices, text);
+    const svg = await compose(choices, text, opts);
 
     while (CANVAS.firstChild) CANVAS.removeChild(CANVAS.firstChild);
     while (svg.firstChild) CANVAS.appendChild(svg.firstChild);
@@ -181,147 +261,147 @@
     return { choices, text };
   }
 
-  // ---------- auto-shuffle ----------
+  // ---------- auto-shuffle (idle) ----------
 
   function startAutoShuffle() {
     stopAutoShuffle();
     state.autoTimer = setInterval(() => {
-      if (!state.isAnimating && !state.finalized) renderRandom();
-    }, 1800);
+      if (!state.isAnimating && !state.finalized) {
+        renderRandom({ finalized: false });
+      }
+    }, 200);
   }
   function stopAutoShuffle() {
     if (state.autoTimer) clearInterval(state.autoTimer);
     state.autoTimer = null;
   }
 
-  // ---------- generate animation: speed up → slow down → pop ----------
+  // ---------- generate animation ----------
 
   async function runGenerateAnimation() {
     state.isAnimating = true;
     stopAutoShuffle();
 
-    // Frame intervals (ms): start fast, gradually slow
-    const frames = [40, 40, 50, 60, 80, 110, 150, 200, 280, 380];
+    GEN_BTN.dataset.busy = 'true';
+    GEN_LABEL.textContent = 'Generating';
+    CANVAS_WRAP.dataset.state = 'generating';
+
+    // Speed curve: start fast (40ms), accelerate slightly, then slow down
+    const frames = [40, 35, 35, 40, 50, 65, 90, 130, 180, 240, 320, 420];
     for (const ms of frames) {
-      await renderRandom();
+      await renderRandom({ finalized: false });
       await new Promise((r) => setTimeout(r, ms));
     }
-    await renderRandom(); // final frame
 
-    // Pop
-    CANVAS_WRAP.classList.remove('pop');
-    void CANVAS_WRAP.offsetWidth; // restart animation
-    CANVAS_WRAP.classList.add('pop');
+    // Final render with finalized look (light blue card + black core text)
+    await renderRandom({ finalized: true });
 
+    CANVAS_WRAP.dataset.state = 'finalized';
     state.isAnimating = false;
     state.finalized = true;
     state.counter += 1;
     COUNTER.textContent = String(state.counter);
 
-    GEN_BTN.classList.add('hidden');
-    SHF_BTN.classList.remove('hidden');
-    DL_BTN.classList.remove('hidden');
-    QR_BTN.classList.remove('hidden');
+    GEN_BTN.dataset.busy = 'false';
+    GEN_LABEL.textContent = 'Look khác';
+    DL_GROUP.classList.remove('hidden');
+  }
+
+  function reshuffle() {
+    state.finalized = false;
+    GEN_LABEL.textContent = 'Generate';
+    DL_GROUP.classList.add('hidden');
+    CANVAS_WRAP.dataset.state = 'idle';
+    renderRandom({ finalized: false });
+    startAutoShuffle();
   }
 
   // ---------- serialize / download ----------
 
-  function serializeCurrent() {
+  async function buildDownloadSvg() {
+    if (!state.manifest) return null;
+    // Re-compose with forDownload flag using the CURRENT canvas state.
+    // We re-read the rendered DOM (which has the finalized look) — clone it.
     const clone = document.createElementNS(SVG_NS, 'svg');
     clone.setAttribute('xmlns', SVG_NS);
-    clone.setAttribute('viewBox', CANVAS.getAttribute('viewBox') || `0 0 ${ART_SIZE} ${TOTAL_H}`);
+    clone.setAttribute('viewBox', `0 0 ${ART_W} ${ART_H}`);
     for (const child of CANVAS.childNodes) {
       clone.appendChild(child.cloneNode(true));
     }
-    const xml = new XMLSerializer().serializeToString(clone);
+    // Strip border (canvas-wrap border is CSS, not in SVG, so already absent)
+    return clone;
+  }
+
+  function serializeSvgString(svgEl) {
+    const xml = new XMLSerializer().serializeToString(svgEl);
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + xml;
   }
 
-  function downloadSvg() {
-    const svgText = serializeCurrent();
-    const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+  async function downloadSvg() {
+    const svg = await buildDownloadSvg();
+    if (!svg) return;
+    const text = serializeSvgString(svg);
+    const blob = new Blob([text], { type: 'image/svg+xml;charset=utf-8' });
+    triggerDownload(blob, `dunglook-${Date.now()}.svg`);
+  }
+
+  async function downloadPng() {
+    const svg = await buildDownloadSvg();
+    if (!svg) return;
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    } catch {}
+
+    const xml = serializeSvgString(svg);
+    const svgBlob = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    const SCALE = 2; // 1400x1400 PNG for crisp output
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.decoding = 'async';
+
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = () => reject(new Error('PNG render: image load failed'));
+      img.src = url;
+    });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = ART_W * SCALE;
+    canvas.height = ART_H * SCALE;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      triggerDownload(blob, `dunglook-${Date.now()}.png`);
+    }, 'image/png');
+  }
+
+  function triggerDownload(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `dunglook-${Date.now()}.svg`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
 
-  // ---------- QR ----------
-
-  function showQr() {
-    while (QR_CONTAINER.firstChild) QR_CONTAINER.removeChild(QR_CONTAINER.firstChild);
-    QR_NOTE.textContent = '';
-    QR_MODAL.classList.remove('hidden');
-
-    const svgText = serializeCurrent();
-    const dataUrl =
-      'data:image/svg+xml;base64,' +
-      btoa(unescape(encodeURIComponent(svgText)));
-
-    if (typeof QRCode === 'undefined') {
-      QR_NOTE.textContent = 'Lỗi: chưa load được thư viện QR (kiểm tra mạng).';
-      return;
-    }
-
-    const canvas = document.createElement('canvas');
-    QR_CONTAINER.appendChild(canvas);
-
-    QRCode.toCanvas(
-      canvas,
-      dataUrl,
-      { width: 256, errorCorrectionLevel: 'L', margin: 1 },
-      (err) => {
-        if (err) {
-          while (QR_CONTAINER.firstChild) QR_CONTAINER.removeChild(QR_CONTAINER.firstChild);
-          const m = document.createElement('div');
-          m.textContent = 'SVG quá lớn để encode trong QR.';
-          m.style.color = '#c0392b';
-          m.style.fontSize = '14px';
-          QR_CONTAINER.appendChild(m);
-          QR_NOTE.textContent =
-            'Hãy bấm DOWNLOAD SVG, rồi AirDrop / Bluetooth / Zalo sang điện thoại.';
-        } else {
-          QR_NOTE.textContent =
-            'Mở camera điện thoại quét QR — sticker sẽ tự mở. Bấm giữ để lưu.';
-        }
-      }
-    );
-  }
-
-  function hideQr() {
-    QR_MODAL.classList.add('hidden');
-  }
-
-  // ---------- reshuffle ----------
-
-  function reshuffle() {
-    state.finalized = false;
-    GEN_BTN.classList.remove('hidden');
-    SHF_BTN.classList.add('hidden');
-    DL_BTN.classList.add('hidden');
-    QR_BTN.classList.add('hidden');
-    renderRandom();
-    startAutoShuffle();
-  }
-
-  // ---------- bind events ----------
+  // ---------- event wiring ----------
 
   GEN_BTN.addEventListener('click', () => {
-    if (!state.isAnimating) runGenerateAnimation();
+    if (state.isAnimating) return;
+    if (state.finalized) reshuffle();
+    else runGenerateAnimation();
   });
-  SHF_BTN.addEventListener('click', reshuffle);
-  DL_BTN.addEventListener('click', downloadSvg);
-  QR_BTN.addEventListener('click', showQr);
-  QR_MODAL.addEventListener('click', (e) => {
-    if (e.target.dataset.close !== undefined) hideQr();
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !QR_MODAL.classList.contains('hidden')) hideQr();
-  });
+  DL_SVG.addEventListener('click', downloadSvg);
+  DL_PNG.addEventListener('click', downloadPng);
 
   // ---------- boot ----------
 
@@ -334,21 +414,23 @@
       );
       if (total === 0) {
         setStatus(
-          'Chưa có SVG. Drop file .svg vào assets/01_base, 02_eyes,… rồi push GitHub. Action sẽ tự rebuild manifest.'
+          'Chưa có SVG. Drop file .svg vào assets/01_base, 02_eyes, 03_sticker rồi push GitHub. Action sẽ tự rebuild trong ~1 phút.',
+          'empty'
         );
         return;
       }
       const tx = state.manifest.text || {};
+      const cl = state.manifest.colors || [];
       setStatus(
-        `${state.manifest.layers.length} lớp · ${total} svg · ${(tx.prefix || []).length}+${(tx.suffix || []).length} text. Sẵn sàng.`
+        `${state.manifest.layers.length} lớp · ${total} svg · ${(tx.prefix || []).length}+${(tx.suffix || []).length} text · ${cl.length} màu`
       );
-      await renderRandom();
+      await renderRandom({ finalized: false });
       startAutoShuffle();
     } catch (e) {
       console.error(e);
       setStatus(
-        'Không tải được data/manifest.json. Đợi GitHub Action build xong rồi reload trang.',
-        true
+        'Không tải được data/manifest.json. Đợi GitHub Action build xong rồi reload.',
+        'error'
       );
     }
   })();

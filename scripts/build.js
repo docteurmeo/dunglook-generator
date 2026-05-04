@@ -7,6 +7,9 @@ const ASSETS_DIR = path.join(ROOT, 'assets');
 const CONTENT_DIR = path.join(ROOT, 'content');
 const OUT_FILE = path.join(ROOT, 'data', 'manifest.json');
 
+const ART_FRAME = { width: 700, height: 700 };
+const TEXT_FRAME = { x: 263, y: 500, width: 174, height: 164 };
+
 function listLayerFolders() {
   if (!fs.existsSync(ASSETS_DIR)) return [];
   return fs
@@ -24,18 +27,17 @@ function listSvgs(layerDir) {
     .sort();
 }
 
-function readConfig(layerDir) {
-  const p = path.join(layerDir, '_config.json');
-  if (!fs.existsSync(p)) return {};
+function readJson(p) {
+  if (!fs.existsSync(p)) return null;
   try {
     return JSON.parse(fs.readFileSync(p, 'utf8'));
   } catch (e) {
     console.warn(`! cannot parse ${p}: ${e.message}`);
-    return {};
+    return null;
   }
 }
 
-function readTextLists() {
+function readTexts() {
   const xlsxPath = path.join(CONTENT_DIR, 'text-lists.xlsx');
   if (!fs.existsSync(xlsxPath)) {
     console.warn('  no content/text-lists.xlsx — text lists empty');
@@ -57,11 +59,22 @@ function readTextLists() {
   return { prefix, suffix };
 }
 
+function readColors() {
+  const p = path.join(CONTENT_DIR, 'colors.json');
+  const fallback = ['#009ada', '#f99d1c', '#ad75b2', '#5dbb4c', '#ec008c', '#f47421'];
+  const data = readJson(p);
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    console.warn('  no content/colors.json — using fallback palette');
+    return fallback;
+  }
+  return data.filter((c) => typeof c === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(c.trim())).map((c) => c.trim());
+}
+
 function build() {
   const layers = [];
   for (const folder of listLayerFolders()) {
     const dir = path.join(ASSETS_DIR, folder);
-    const cfg = readConfig(dir);
+    const cfg = readJson(path.join(dir, '_config.json')) || {};
     const svgs = listSvgs(dir);
     layers.push({
       folder,
@@ -70,10 +83,14 @@ function build() {
       behavior: cfg.behavior || 'fixed_center',
       required: cfg.required ?? false,
       probability: cfg.probability ?? 1,
-      viewBox: cfg.viewBox || '0 0 1024 1024',
-      anchor: cfg.anchor || null,
-      positionRange: cfg.positionRange || null,
-      angleSteps: cfg.angleSteps || null,
+      viewBox: cfg.viewBox || '0 0 500 500',
+      renderSize: cfg.renderSize ?? null,
+      renderOffset: cfg.renderOffset ?? null,
+      anchor: cfg.anchor ?? null,
+      container: cfg.container ?? null,
+      padding: cfg.padding ?? null,
+      rotation: cfg.rotation ?? null,
+      colorize: cfg.colorize ?? false,
       assets: svgs.map((f) => ({
         file: f,
         path: `assets/${folder}/${f}`
@@ -82,15 +99,17 @@ function build() {
   }
   layers.sort((a, b) => a.order - b.order);
 
-  const text = readTextLists();
-  const baseLayer = layers.find((l) => l.behavior === 'fixed_center') || layers[0];
-  const baseViewBox = baseLayer ? baseLayer.viewBox : '0 0 1024 1024';
+  const text = readTexts();
+  const colors = readColors();
 
   const manifest = {
     generatedAt: new Date().toISOString(),
-    canvas: { viewBox: baseViewBox, core: 'ĐÚNG LOOK' },
+    artFrame: ART_FRAME,
+    textFrame: TEXT_FRAME,
+    coreText: 'đúng look',
     layers,
-    text
+    text,
+    colors
   };
 
   fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
@@ -100,9 +119,10 @@ function build() {
   console.log('OK manifest written → data/manifest.json');
   console.log(`   ${layers.length} layers, ${totalSvg} svg files`);
   console.log(`   text: ${text.prefix.length} prefix · ${text.suffix.length} suffix`);
+  console.log(`   colors: ${colors.length} swatches`);
   for (const l of layers) {
     console.log(
-      `   - ${l.folder}: ${l.assets.length} svg · behavior=${l.behavior} · p=${l.probability}`
+      `   - ${l.folder}: ${l.assets.length} svg · ${l.behavior}${l.colorize ? ' · colorize' : ''} · p=${l.probability}`
     );
   }
 }

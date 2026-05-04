@@ -4,6 +4,8 @@
   "behavior": "fixed_position",
   "required": true,
   "probability": 1.0,
-  "viewBox": "0 0 1024 1024",
-  "anchor": { "x": 512, "y": 380 }
+  "viewBox": "0 0 400 180",
+  "renderSize": { "width": 400, "height": 180 },
+  "anchor": { "x": 350, "y": 250 },
+  "colorize": false
 }

@@ -4,41 +4,53 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>ĐÚNG LOOK</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Be+Vietnam+Pro:wght@400;700;800&display=swap"
+    rel="stylesheet"
+  />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">ĐÚNG LOOK</div>
-    <div class="counter">GEN <span id="counterLabel">0</span></div>
+    <div class="brand" id="brandLogo" aria-label="ĐÚNG LOOK">
+      <span class="brand-fallback">ĐÚNG LOOK</span>
+    </div>
+    <div class="counter"><span id="counterLabel">0</span> look đã tạo</div>
   </header>
 
   <main class="stage">
-    <div class="canvas-wrap" id="canvasWrap">
-      <svg id="canvas" viewBox="0 0 1024 1280" xmlns="http://www.w3.org/2000/svg"
+    <div class="canvas-wrap" id="canvasWrap" data-state="idle">
+      <svg id="canvas" viewBox="0 0 700 700" xmlns="http://www.w3.org/2000/svg"
            preserveAspectRatio="xMidYMid meet" aria-label="Sticker"></svg>
     </div>
   </main>
 
   <div class="controls">
-    <button id="generateBtn" class="btn primary">GENERATE</button>
-    <button id="shuffleBtn" class="btn primary hidden">SHUFFLE LẠI</button>
-    <button id="downloadBtn" class="btn secondary hidden">DOWNLOAD SVG</button>
-    <button id="qrBtn" class="btn secondary hidden">QR CODE</button>
-  </div>
+    <button id="generateBtn" class="btn pill" type="button">
+      <span class="btn-label">Generate</span>
+      <span class="btn-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
+          <path d="M12 2 L13.8 9.6 L21 11 L13.8 12.4 L12 22 L10.2 12.4 L3 11 L10.2 9.6 Z"
+                fill="#ec008c" />
+        </svg>
+      </span>
+    </button>
 
-  <div id="status" class="status">Đang tải…</div>
-
-  <div id="qrModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
-    <div class="modal-bg" data-close></div>
-    <div class="modal-card">
-      <div class="modal-title" id="qrTitle">Quét bằng điện thoại</div>
-      <div id="qrContainer"></div>
-      <div id="qrNote" class="modal-note"></div>
-      <button id="qrCloseBtn" class="btn secondary" data-close>Đóng</button>
+    <div id="downloadGroup" class="download-group hidden">
+      <button id="downloadSvgBtn" class="link-btn" type="button">
+        Download SVG
+      </button>
+      <span class="dot">·</span>
+      <button id="downloadPngBtn" class="link-btn" type="button">
+        Download PNG
+      </button>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <div id="status" class="status" role="status">Đang tải…</div>
+
   <script src="app.js"></script>
 </body>
 </html>

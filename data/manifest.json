@@ -1,9 +1,16 @@
 {
-  "generatedAt": "2026-05-04T12:09:14.426Z",
-  "canvas": {
-    "viewBox": "0 0 1024 1024",
-    "core": "ĐÚNG LOOK"
+  "generatedAt": "2026-05-04T15:11:30.342Z",
+  "artFrame": {
+    "width": 700,
+    "height": 700
   },
+  "textFrame": {
+    "x": 263,
+    "y": 500,
+    "width": 174,
+    "height": 164
+  },
+  "coreText": "đúng look",
   "layers": [
     {
       "folder": "01_base",
@@ -12,11 +19,43 @@
       "behavior": "fixed_center",
       "required": true,
       "probability": 1,
-      "viewBox": "0 0 1024 1024",
+      "viewBox": "0 0 500 500",
+      "renderSize": 500,
+      "renderOffset": {
+        "x": 100,
+        "y": 0
+      },
       "anchor": null,
-      "positionRange": null,
-      "angleSteps": null,
-      "assets": []
+      "container": null,
+      "padding": null,
+      "rotation": null,
+      "colorize": false,
+      "assets": [
+        {
+          "file": "Base_1.svg",
+          "path": "assets/01_base/Base_1.svg"
+        },
+        {
+          "file": "Base_2.svg",
+          "path": "assets/01_base/Base_2.svg"
+        },
+        {
+          "file": "Base_3.svg",
+          "path": "assets/01_base/Base_3.svg"
+        },
+        {
+          "file": "Base_4.svg",
+          "path": "assets/01_base/Base_4.svg"
+        },
+        {
+          "file": "Base_5.svg",
+          "path": "assets/01_base/Base_5.svg"
+        },
+        {
+          "file": "Base_6.svg",
+          "path": "assets/01_base/Base_6.svg"
+        }
+      ]
     },
     {
       "folder": "02_eyes",
@@ -25,57 +64,108 @@
       "behavior": "fixed_position",
       "required": true,
       "probability": 1,
-      "viewBox": "0 0 1024 1024",
-      "anchor": {
-        "x": 512,
-        "y": 380
+      "viewBox": "0 0 400 180",
+      "renderSize": {
+        "width": 400,
+        "height": 180
       },
-      "positionRange": null,
-      "angleSteps": null,
-      "assets": []
+      "renderOffset": null,
+      "anchor": {
+        "x": 350,
+        "y": 250
+      },
+      "container": null,
+      "padding": null,
+      "rotation": null,
+      "colorize": false,
+      "assets": [
+        {
+          "file": "Eye 1.svg",
+          "path": "assets/02_eyes/Eye 1.svg"
+        },
+        {
+          "file": "Eye 2.svg",
+          "path": "assets/02_eyes/Eye 2.svg"
+        },
+        {
+          "file": "Eye 3.svg",
+          "path": "assets/02_eyes/Eye 3.svg"
+        },
+        {
+          "file": "Eye 4.svg",
+          "path": "assets/02_eyes/Eye 4.svg"
+        },
+        {
+          "file": "Eye 5.svg",
+          "path": "assets/02_eyes/Eye 5.svg"
+        },
+        {
+          "file": "Eye 6.svg",
+          "path": "assets/02_eyes/Eye 6.svg"
+        }
+      ]
     },
     {
-      "folder": "03_accessory_float",
-      "name": "Floating Accessory",
+      "folder": "03_sticker",
+      "name": "Sticker",
       "order": 3,
-      "behavior": "random_position",
+      "behavior": "random_corner",
       "required": false,
       "probability": 0.85,
-      "viewBox": "0 0 1024 1024",
+      "viewBox": "0 0 140 140",
+      "renderSize": {
+        "width": 140,
+        "height": 140
+      },
+      "renderOffset": null,
       "anchor": null,
-      "positionRange": {
-        "xMin": 150,
-        "xMax": 874,
-        "yMin": 150,
-        "yMax": 874
+      "container": {
+        "left": 100,
+        "top": 0,
+        "width": 500,
+        "height": 500
       },
-      "angleSteps": null,
-      "assets": []
-    },
-    {
-      "folder": "04_accessory_fixed",
-      "name": "Fixed Accessory",
-      "order": 4,
-      "behavior": "random_angle",
-      "required": false,
-      "probability": 0.75,
-      "viewBox": "0 0 1024 1024",
-      "anchor": {
-        "x": 850,
-        "y": 174
+      "padding": 60,
+      "rotation": {
+        "mode": "continuous",
+        "min": -45,
+        "max": 45
       },
-      "positionRange": null,
-      "angleSteps": [
-        0,
-        45,
-        90,
-        135,
-        180,
-        225,
-        270,
-        315
-      ],
-      "assets": []
+      "colorize": true,
+      "assets": [
+        {
+          "file": "Sticker_1.svg",
+          "path": "assets/03_sticker/Sticker_1.svg"
+        },
+        {
+          "file": "Sticker_2.svg",
+          "path": "assets/03_sticker/Sticker_2.svg"
+        },
+        {
+          "file": "Sticker_3.svg",
+          "path": "assets/03_sticker/Sticker_3.svg"
+        },
+        {
+          "file": "Sticker_4.svg",
+          "path": "assets/03_sticker/Sticker_4.svg"
+        },
+        {
+          "file": "Sticker_5.svg",
+          "path": "assets/03_sticker/Sticker_5.svg"
+        },
+        {
+          "file": "Sticker_6.svg",
+          "path": "assets/03_sticker/Sticker_6.svg"
+        },
+        {
+          "file": "Sticker_7.svg",
+          "path": "assets/03_sticker/Sticker_7.svg"
+        },
+        {
+          "file": "Sticker_8.svg",
+          "path": "assets/03_sticker/Sticker_8.svg"
+        }
+      ]
     }
   ],
   "text": {
@@ -97,5 +187,13 @@
       "trendy AF",
       "gu cực mạnh"
     ]
-  }
+  },
+  "colors": [
+    "#009ada",
+    "#f99d1c",
+    "#ad75b2",
+    "#5dbb4c",
+    "#ec008c",
+    "#f47421"
+  ]
 }

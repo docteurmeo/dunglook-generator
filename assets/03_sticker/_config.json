@@ -1,0 +1,13 @@
+{
+  "name": "Sticker",
+  "order": 3,
+  "behavior": "random_corner",
+  "required": false,
+  "probability": 0.85,
+  "viewBox": "0 0 140 140",
+  "renderSize": { "width": 140, "height": 140 },
+  "padding": 60,
+  "container": { "left": 100, "top": 0, "width": 500, "height": 500 },
+  "rotation": { "mode": "continuous", "min": -45, "max": 45 },
+  "colorize": true
+}
