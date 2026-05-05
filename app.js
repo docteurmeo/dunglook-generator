@@ -5,6 +5,20 @@
   const ART_W = 700;
   const ART_H = 700;
 
+  // ============================================================
+  //  COUNTER CONFIG  (chinh sua o day)
+  // ============================================================
+  //  COUNTER_OFFSET: so "ao" cong them vao so dem that.
+  //  Vi du: dat = 1247 thi web hien thi 1247 ngay khi vua mo,
+  //  va moi lan generate thi se tang len: 1248, 1249, ...
+  //  De ve 0 (chi dem that) thi dat = 0.
+  const COUNTER_OFFSET = 0;
+  // ============================================================
+  //  Khong can sua phan duoi tru khi muon doi dich vu dem.
+  const COUNTER_NS  = 'docteurmeo-dunglook';
+  const COUNTER_KEY = 'looks';
+  const COUNTER_API = 'https://abacus.jasoncameron.dev';
+
   const $ = (id) => document.getElementById(id);
   const CANVAS = $('canvas');
   const CANVAS_WRAP = $('canvasWrap');
@@ -18,7 +32,7 @@
   const state = {
     manifest: null,
     svgCache: new Map(),
-    counter: 0,
+    displayCount: 0,
     autoTimer: null,
     isAnimating: false,
     finalized: false
@@ -33,6 +47,35 @@
   function parseViewBox(vb) {
     const p = String(vb || '0 0 100 100').trim().split(/\s+/).map(Number);
     return { x: p[0] || 0, y: p[1] || 0, w: p[2] || 100, h: p[3] || 100 };
+  }
+
+  // ---------- remote counter (Abacus) ----------
+
+  async function fetchRemoteCount() {
+    try {
+      const res = await fetch(`${COUNTER_API}/get/${COUNTER_NS}/${COUNTER_KEY}`, { cache: 'no-store' });
+      if (res.status === 404) return 0;
+      if (!res.ok) return null;
+      const j = await res.json();
+      return typeof j.value === 'number' ? j.value : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function hitRemoteCount() {
+    try {
+      const res = await fetch(`${COUNTER_API}/hit/${COUNTER_NS}/${COUNTER_KEY}`, { cache: 'no-store' });
+      if (!res.ok) return null;
+      const j = await res.json();
+      return typeof j.value === 'number' ? j.value : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function renderCounter() {
+    COUNTER.textContent = String(COUNTER_OFFSET + state.displayCount);
   }
 
   async function fetchManifest() {
@@ -317,8 +360,14 @@
     CANVAS_WRAP.dataset.state = 'finalized';
     state.isAnimating = false;
     state.finalized = true;
-    state.counter += 1;
-    COUNTER.textContent = String(state.counter);
+    state.displayCount += 1;
+    renderCounter();
+    hitRemoteCount().then((srv) => {
+      if (srv !== null && srv > state.displayCount) {
+        state.displayCount = srv;
+        renderCounter();
+      }
+    });
 
     GEN_BTN.dataset.busy = 'false';
     GEN_LABEL.textContent = 'Look khác';
@@ -437,6 +486,15 @@
   // ---------- boot ----------
 
   (async () => {
+    try {
+      const remote = await fetchRemoteCount();
+      state.displayCount = remote ?? 0;
+      renderCounter();
+    } catch (e) {
+      console.warn('[dunglook] counter init failed:', e);
+      renderCounter();
+    }
+
     try {
       state.manifest = await fetchManifest();
       const total = (state.manifest.layers || []).reduce(
