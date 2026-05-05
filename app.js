@@ -12,12 +12,13 @@
   //  Vi du: dat = 1247 thi web hien thi 1247 ngay khi vua mo,
   //  va moi lan generate thi se tang len: 1248, 1249, ...
   //  De ve 0 (chi dem that) thi dat = 0.
-  const COUNTER_OFFSET = 0;
+  const COUNTER_OFFSET = 1247;
   // ============================================================
   //  Khong can sua phan duoi tru khi muon doi dich vu dem.
   const COUNTER_NS  = 'docteurmeo-dunglook';
   const COUNTER_KEY = 'looks';
   const COUNTER_API = 'https://abacus.jasoncameron.dev';
+  const COUNTER_POLL_MS = 4000;  // Cu 4 giay 1 lan dong bo voi server
 
   const $ = (id) => document.getElementById(id);
   const CANVAS = $('canvas');
@@ -77,6 +78,28 @@
   function renderCounter() {
     COUNTER.textContent = String(COUNTER_OFFSET + state.displayCount);
   }
+
+  // Cu COUNTER_POLL_MS giay lay so moi nhat tu server.
+  // Chi tang, khong giam (de khong de len so vua animate local).
+  // Tu dong dung khi tab bi an, chay lai khi tab visible.
+  let _counterPollTimer = null;
+  async function pollCounterOnce() {
+    const srv = await fetchRemoteCount();
+    if (srv !== null && srv > state.displayCount) {
+      state.displayCount = srv;
+      renderCounter();
+    }
+  }
+  function startCounterPolling() {
+    if (_counterPollTimer) return;
+    _counterPollTimer = setInterval(() => {
+      if (document.hidden) return;
+      pollCounterOnce();
+    }, COUNTER_POLL_MS);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) pollCounterOnce();
+  });
 
   async function fetchManifest() {
     const res = await fetch('data/manifest.json', { cache: 'no-store' });
@@ -494,6 +517,7 @@
       console.warn('[dunglook] counter init failed:', e);
       renderCounter();
     }
+    startCounterPolling();
 
     try {
       state.manifest = await fetchManifest();
