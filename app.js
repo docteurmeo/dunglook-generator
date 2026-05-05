@@ -388,8 +388,6 @@
       bg.setAttribute('y', '0');
       bg.setAttribute('width', String(ART_W));
       bg.setAttribute('height', String(ART_H));
-      bg.setAttribute('rx', '37');
-      bg.setAttribute('ry', '37');
       bg.setAttribute('fill', '#d3e8f0');
       svg.appendChild(bg);
     }
@@ -448,12 +446,13 @@
       return t;
     };
 
+    // 3 dong cung font size 48, spacing deu (~8px gap giua cac dong)
     if (text.prefix) {
-      svg.appendChild(mkText(text.prefix, tFrame.y + 10, 32, text.prefixColor, true));
+      svg.appendChild(mkText(text.prefix, tFrame.y + 0, 48, text.prefixColor, true));
     }
-    svg.appendChild(mkText(text.core, tFrame.y + 55, 48, coreColor, false));
+    svg.appendChild(mkText(text.core, tFrame.y + 56, 48, coreColor, false));
     if (text.suffix) {
-      svg.appendChild(mkText(text.suffix, tFrame.y + 119, 32, text.suffixColor, true));
+      svg.appendChild(mkText(text.suffix, tFrame.y + 112, 48, text.suffixColor, true));
     }
 
     return svg;

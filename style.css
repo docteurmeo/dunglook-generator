@@ -116,17 +116,13 @@ body {
   width: min(var(--canvas-size), 88vw, 70vh);
   aspect-ratio: 1 / 1;
   position: relative;
-  border-radius: var(--frame-radius);
   background: transparent;
-  border: 4px solid transparent;
   transition:
     background 0.35s cubic-bezier(.34, 1.56, .64, 1),
-    border-color 0.35s ease,
     transform 0.45s cubic-bezier(.34, 1.56, .64, 1);
 }
 .canvas-wrap[data-state="finalized"] {
   background: var(--bg-card);
-  border-color: var(--border-card);
   animation: pop 0.55s cubic-bezier(.34, 1.56, .64, 1);
 }
 .canvas-wrap[data-state="generating"] {
@@ -145,8 +141,6 @@ body {
   width: 100%;
   height: 100%;
   display: block;
-  border-radius: var(--frame-radius);
-  overflow: hidden;
 }
 
 /* ============================================================
