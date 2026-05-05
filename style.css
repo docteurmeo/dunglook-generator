@@ -240,7 +240,7 @@ body {
   font-family: var(--font-display);
   font-size: clamp(14px, 1.4vw, 20px);
 }
-.download-group.hidden { display: none; }
+.download-group.hidden { visibility: hidden; pointer-events: none; }
 .link-btn {
   background: transparent;
   border: 0;
