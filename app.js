@@ -198,13 +198,77 @@
 
       const pick = pickRandom(layer.assets);
       const placement = computePlacement(layer);
-      const recolor = layer.colorize && manifest.colors?.length
-        ? pickRandom(manifest.colors)
-        : null;
-
-      out.push({ layer, asset: pick, placement, recolor });
+      // recolor decided later in compose, after we know base's baked colors
+      out.push({ layer, asset: pick, placement, recolor: null });
     }
     return out;
+  }
+
+  // ---------- color similarity ----------
+
+  function hexToRgb(hex) {
+    const h = String(hex || '').replace('#', '').trim();
+    if (h.length === 3) {
+      return {
+        r: parseInt(h[0] + h[0], 16),
+        g: parseInt(h[1] + h[1], 16),
+        b: parseInt(h[2] + h[2], 16)
+      };
+    }
+    if (h.length === 6) {
+      return {
+        r: parseInt(h.substr(0, 2), 16),
+        g: parseInt(h.substr(2, 2), 16),
+        b: parseInt(h.substr(4, 2), 16)
+      };
+    }
+    return null;
+  }
+
+  function colorDistance(c1, c2) {
+    const a = hexToRgb(c1);
+    const b = hexToRgb(c2);
+    if (!a || !b) return Infinity;
+    const dr = a.r - b.r;
+    const dg = a.g - b.g;
+    const db = a.b - b.b;
+    return Math.sqrt(dr * dr + dg * dg + db * db);
+  }
+
+  // Threshold ~80 in RGB space catches "visually similar" colors
+  // (eg orange #f47421 vs red-orange #ef3c23). Higher = stricter.
+  const COLOR_CLASH_THRESHOLD = 80;
+
+  function extractSvgColors(svgText) {
+    const out = new Set();
+    const re = /(?:fill|stroke)\s*[=:]\s*["']?\s*(#[0-9a-fA-F]{3,8})/g;
+    let m;
+    while ((m = re.exec(svgText)) !== null) {
+      out.add(m[1].toLowerCase());
+    }
+    return out;
+  }
+
+  function pickStickerColor(palette, forbidden) {
+    if (!palette.length) return null;
+    const forbiddenArr = Array.from(forbidden);
+    const safe = palette.filter((c) =>
+      forbiddenArr.every((f) => colorDistance(c, f) >= COLOR_CLASH_THRESHOLD)
+    );
+    if (safe.length > 0) return pickRandom(safe);
+    // All palette colors clash → pick the one FARTHEST from base set
+    let best = palette[0];
+    let bestDist = -1;
+    for (const c of palette) {
+      const minD = forbiddenArr.length
+        ? Math.min(...forbiddenArr.map((f) => colorDistance(c, f)))
+        : Infinity;
+      if (minD > bestDist) {
+        bestDist = minD;
+        best = c;
+      }
+    }
+    return best;
   }
 
   function computePlacement(layer) {
@@ -293,6 +357,22 @@
 
   async function compose(choices, text, opts = {}) {
     const finalized = !!opts.finalized;
+
+    // Find baked colors from non-colorize layers (base, eyes...).
+    // Sticker recolor will avoid colors visually close to these.
+    const lockedColors = new Set();
+    for (const { layer, asset } of choices) {
+      if (layer.colorize) continue;
+      const txt = await fetchSvgText(asset.path).catch(() => null);
+      if (txt) extractSvgColors(txt).forEach((c) => lockedColors.add(c));
+    }
+
+    const palette = state.manifest?.colors || [];
+    for (const c of choices) {
+      if (c.layer.colorize && palette.length) {
+        c.recolor = pickStickerColor(palette, lockedColors);
+      }
+    }
 
     const svg = document.createElementNS(SVG_NS, 'svg');
     svg.setAttribute('xmlns', SVG_NS);
