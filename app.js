@@ -50,6 +50,53 @@
     return { x: p[0] || 0, y: p[1] || 0, w: p[2] || 100, h: p[3] || 100 };
   }
 
+  // ---------- audio (Web Audio synth) ----------
+  // Tao am thanh bang code, khong can file mp3.
+  // AudioContext khoi tao lazy o lan click dau (browser autoplay policy).
+
+  let _audioCtx = null;
+  function getAudioCtx() {
+    if (_audioCtx) return _audioCtx;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    _audioCtx = new Ctx();
+    return _audioCtx;
+  }
+
+  function playTone({ freq, duration = 0.08, type = 'sine', volume = 0.15, attack = 0.005, delay = 0 }) {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    const start = ctx.currentTime + delay;
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(volume, start + attack);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + duration + 0.02);
+  }
+
+  function playClick() {
+    playTone({ freq: 880, duration: 0.08, type: 'triangle', volume: 0.18 });
+  }
+
+  function playTick(progress) {
+    const freq = 500 + progress * 800;
+    playTone({ freq, duration: 0.05, type: 'square', volume: 0.06 });
+  }
+
+  function playReveal() {
+    // Arpeggio C5-E5-G5-C6, major chord ascending
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, i) => {
+      playTone({ freq, duration: 0.22, type: 'triangle', volume: 0.16, delay: i * 0.07 });
+    });
+  }
+
   // ---------- remote counter (Abacus) ----------
 
   async function fetchRemoteCount() {
@@ -372,13 +419,15 @@
 
     // Speed curve: start fast (40ms), accelerate slightly, then slow down
     const frames = [40, 35, 35, 40, 50, 65, 90, 130, 180, 240, 320, 420];
-    for (const ms of frames) {
+    for (let i = 0; i < frames.length; i++) {
       await renderRandom({ finalized: false });
-      await new Promise((r) => setTimeout(r, ms));
+      playTick(i / (frames.length - 1));
+      await new Promise((r) => setTimeout(r, frames[i]));
     }
 
     // Final render with finalized look (light blue card + black core text)
     await renderRandom({ finalized: true });
+    playReveal();
 
     CANVAS_WRAP.dataset.state = 'finalized';
     state.isAnimating = false;
@@ -500,11 +549,12 @@
 
   GEN_BTN.addEventListener('click', () => {
     if (state.isAnimating) return;
+    playClick();
     if (state.finalized) reshuffle();
     else runGenerateAnimation();
   });
-  DL_SVG.addEventListener('click', downloadSvg);
-  DL_PNG.addEventListener('click', downloadPng);
+  DL_SVG.addEventListener('click', () => { playClick(); downloadSvg(); });
+  DL_PNG.addEventListener('click', () => { playClick(); downloadPng(); });
 
   // ---------- boot ----------
 
