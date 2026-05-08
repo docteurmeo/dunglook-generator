@@ -316,12 +316,23 @@
   }
 
   function chooseText(manifest) {
-    const t = manifest.text || { prefix: [], suffix: [] };
     const c = manifest.colors || [];
+    let prefix = '';
+    let suffix = '';
+
+    const topics = manifest.text?.topics;
+    if (topics && topics.length > 0) {
+      // Equal probability per topic → random topic first
+      const topic = pickRandom(topics);
+      // Then random prefix & suffix independently within that topic
+      prefix = topic.prefix?.length ? pickRandom(topic.prefix) : '';
+      suffix = topic.suffix?.length ? pickRandom(topic.suffix) : '';
+    }
+
     return {
-      prefix: t.prefix?.length ? pickRandom(t.prefix) : '',
+      prefix,
       core: manifest.coreText || 'đúng look',
-      suffix: t.suffix?.length ? pickRandom(t.suffix) : '',
+      suffix,
       prefixColor: c.length ? pickRandom(c) : '#009ada',
       suffixColor: c.length ? pickRandom(c) : '#f99d1c'
     };

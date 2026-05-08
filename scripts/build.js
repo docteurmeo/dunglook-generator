@@ -41,22 +41,37 @@ function readTexts() {
   const xlsxPath = path.join(CONTENT_DIR, 'text-lists.xlsx');
   if (!fs.existsSync(xlsxPath)) {
     console.warn('  no content/text-lists.xlsx — text lists empty');
-    return { prefix: [], suffix: [] };
+    return { topics: [] };
   }
   let XLSX;
   try {
     XLSX = require('xlsx');
   } catch {
     console.warn('  xlsx package not installed — run npm install');
-    return { prefix: [], suffix: [] };
+    return { topics: [] };
   }
   const wb = XLSX.readFile(xlsxPath);
   const ws = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
-  const uniq = (arr) => [...new Set(arr.filter(Boolean))];
-  const prefix = uniq(rows.map((r) => String(r.prefix || '').trim()));
-  const suffix = uniq(rows.map((r) => String(r.suffix || '').trim()));
-  return { prefix, suffix };
+
+  // Group by topic, preserving insertion order.
+  // Columns: topic | prefix | suffix
+  const topicMap = new Map();
+  for (const row of rows) {
+    const topicName = String(row.topic || '').trim();
+    const prefix    = String(row.prefix  || '').trim();
+    const suffix    = String(row.suffix  || '').trim();
+    if (!topicName) continue;
+    if (!topicMap.has(topicName)) {
+      topicMap.set(topicName, { name: topicName, prefix: [], suffix: [] });
+    }
+    const t = topicMap.get(topicName);
+    if (prefix && !t.prefix.includes(prefix)) t.prefix.push(prefix);
+    if (suffix && !t.suffix.includes(suffix)) t.suffix.push(suffix);
+  }
+
+  const topics = Array.from(topicMap.values());
+  return { topics };
 }
 
 function readColors() {
@@ -118,7 +133,10 @@ function build() {
   const totalSvg = layers.reduce((s, l) => s + l.assets.length, 0);
   console.log('OK manifest written → data/manifest.json');
   console.log(`   ${layers.length} layers, ${totalSvg} svg files`);
-  console.log(`   text: ${text.prefix.length} prefix · ${text.suffix.length} suffix`);
+  const topicCount = text.topics?.length ?? 0;
+  const prefixTotal = text.topics?.reduce((s, t) => s + t.prefix.length, 0) ?? 0;
+  const suffixTotal = text.topics?.reduce((s, t) => s + t.suffix.length, 0) ?? 0;
+  console.log(`   text: ${topicCount} topics · ${prefixTotal} prefix · ${suffixTotal} suffix`);
   console.log(`   colors: ${colors.length} swatches`);
   for (const l of layers) {
     console.log(
