@@ -66,9 +66,26 @@
       <button id="downloadPngBtn" class="link-btn" type="button">
         Download PNG
       </button>
+      <span class="dot">·</span>
+      <button id="downloadQrBtn" class="link-btn" type="button">
+        Download by QR
+      </button>
     </div>
   </div>
 
+  <div id="qrModal" class="qr-modal hidden" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
+    <div class="qr-modal-backdrop" data-qr-close></div>
+    <div class="qr-modal-card">
+      <button class="qr-modal-close" type="button" data-qr-close aria-label="Đóng">×</button>
+      <h2 id="qrTitle" class="qr-modal-title">Quét QR để tải về điện thoại</h2>
+      <div id="qrCanvasWrap" class="qr-canvas-wrap" aria-live="polite">
+        <div class="qr-loading">Đang tải lên…</div>
+      </div>
+      <p class="qr-modal-hint">Link có hiệu lực trong 1 giờ</p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

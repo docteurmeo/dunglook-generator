@@ -29,6 +29,9 @@
   const DL_GROUP = $('downloadGroup');
   const DL_SVG = $('downloadSvgBtn');
   const DL_PNG = $('downloadPngBtn');
+  const DL_QR  = $('downloadQrBtn');
+  const QR_MODAL = $('qrModal');
+  const QR_WRAP  = $('qrCanvasWrap');
 
   const state = {
     manifest: null,
@@ -597,9 +600,9 @@
     triggerDownload(blob, `dunglook-${Date.now()}.svg`);
   }
 
-  async function downloadPng() {
+  async function buildPngBlob() {
     const svg = await buildDownloadSvg();
-    if (!svg) return;
+    if (!svg) return null;
     try {
       if (document.fonts && document.fonts.ready) await document.fonts.ready;
     } catch {}
@@ -608,7 +611,7 @@
     const svgBlob = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(svgBlob);
 
-    const SCALE = 2; // 1400x1400 PNG for crisp output
+    const SCALE = 2;
     const img = new Image();
     img.decoding = 'async';
     img.src = url;
@@ -618,7 +621,7 @@
     } catch (e) {
       URL.revokeObjectURL(url);
       console.error('[dunglook] PNG decode failed:', e);
-      return;
+      return null;
     }
 
     const canvas = document.createElement('canvas');
@@ -630,10 +633,71 @@
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     URL.revokeObjectURL(url);
 
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      triggerDownload(blob, `dunglook-${Date.now()}.png`);
-    }, 'image/png');
+    return await new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), 'image/png');
+    });
+  }
+
+  async function downloadPng() {
+    const blob = await buildPngBlob();
+    if (!blob) return;
+    triggerDownload(blob, `dunglook-${Date.now()}.png`);
+  }
+
+  // ---------- QR upload + modal ----------
+
+  async function uploadToLitterbox(blob, filename) {
+    const fd = new FormData();
+    fd.append('reqtype', 'fileupload');
+    fd.append('time', '1h');
+    fd.append('fileToUpload', blob, filename);
+    const res = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
+      method: 'POST',
+      body: fd
+    });
+    if (!res.ok) throw new Error('upload failed: ' + res.status);
+    const url = (await res.text()).trim();
+    if (!/^https?:\/\//.test(url)) throw new Error('upload returned invalid url: ' + url);
+    return url;
+  }
+
+  function openQrModal() {
+    QR_MODAL.classList.remove('hidden');
+    QR_WRAP.innerHTML = '<div class="qr-loading">Đang tải lên…</div>';
+  }
+  function closeQrModal() {
+    QR_MODAL.classList.add('hidden');
+    QR_WRAP.innerHTML = '';
+  }
+
+  async function renderQrIntoWrap(url) {
+    QR_WRAP.innerHTML = '';
+    const canvas = document.createElement('canvas');
+    QR_WRAP.appendChild(canvas);
+    await window.QRCode.toCanvas(canvas, url, {
+      width: 260,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+      color: { dark: '#050505', light: '#ffffff' }
+    });
+  }
+
+  async function downloadByQr() {
+    if (DL_QR.dataset.busy === 'true') return;
+    DL_QR.dataset.busy = 'true';
+    openQrModal();
+    try {
+      const blob = await buildPngBlob();
+      if (!blob) throw new Error('build PNG failed');
+      const filename = `dunglook-${Date.now()}.png`;
+      const url = await uploadToLitterbox(blob, filename);
+      await renderQrIntoWrap(url);
+    } catch (e) {
+      console.error('[dunglook] QR upload failed:', e);
+      QR_WRAP.innerHTML = '<div class="qr-error">Tải lên thất bại. Vui lòng thử lại.</div>';
+    } finally {
+      DL_QR.dataset.busy = 'false';
+    }
   }
 
   function triggerDownload(blob, filename) {
@@ -657,6 +721,13 @@
   });
   DL_SVG.addEventListener('click', () => { playClick(); downloadSvg(); });
   DL_PNG.addEventListener('click', () => { playClick(); downloadPng(); });
+  DL_QR.addEventListener('click', () => { playClick(); downloadByQr(); });
+  QR_MODAL.addEventListener('click', (e) => {
+    if (e.target.dataset && 'qrClose' in e.target.dataset) closeQrModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !QR_MODAL.classList.contains('hidden')) closeQrModal();
+  });
 
   // ---------- boot ----------
 
