@@ -508,7 +508,7 @@
     CANVAS_WRAP.dataset.state = 'generating';
 
     // Speed curve: start fast (40ms), accelerate slightly, then slow down
-    const frames = [40, 35, 35, 40, 50, 65, 90, 130, 180, 240, 320, 420];
+    const frames = [120, 105, 105, 120, 150, 200, 275, 395, 545, 730, 975, 1280];
     for (let i = 0; i < frames.length; i++) {
       await renderRandom({ finalized: false });
       playTick(i / (frames.length - 1));
