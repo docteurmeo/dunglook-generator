@@ -133,7 +133,7 @@ body {
   position: relative;
   background: transparent;
   transition:
-    background 0.35s cubic-bezier(.34, 1.56, .64, 1),
+    background-color 1.1s ease-out,
     transform 0.45s cubic-bezier(.34, 1.56, .64, 1);
 }
 .canvas-wrap[data-state="finalized"] {
