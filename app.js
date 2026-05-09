@@ -505,6 +505,13 @@
 
     GEN_BTN.dataset.busy = 'true';
     GEN_LABEL.textContent = 'Generating';
+
+    // Neu dang o trang thai finalized (co nen xanh), chay exit animation truoc
+    // (nen phong to nhe roi thu nho ve 0) cho muot, roi moi vao shuffle.
+    if (state.finalized) {
+      CANVAS_WRAP.dataset.state = 'exiting';
+      await new Promise((r) => setTimeout(r, 500));
+    }
     CANVAS_WRAP.dataset.state = 'generating';
 
     // Speed curve: shuffle nhanh (~40ms) gan het animation, roi ease-in giam toc muot
