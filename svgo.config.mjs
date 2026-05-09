@@ -1,11 +1,21 @@
 export default {
-  multipass: true,
+  multipass: false,
   plugins: [
     {
       name: 'preset-default',
       params: {
         overrides: {
-          cleanupIds: false
+          cleanupIds: false,
+          mergePaths: false,
+          convertShapeToPath: false,
+          removeHiddenElems: false,
+          removeUselessDefs: false,
+          collapseGroups: false,
+          moveGroupAttrsToElems: false,
+          moveElemsAttrsToGroup: false,
+          inlineStyles: false,
+          minifyStyles: false,
+          convertPathData: { floatPrecision: 3 }
         }
       }
     },
