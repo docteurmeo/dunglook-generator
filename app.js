@@ -646,19 +646,63 @@
 
   // ---------- QR upload + modal ----------
 
+  // Cac provider mien phi co CORS, thu lan luot cho den khi 1 cai work.
+  // Tat ca deu auto-expire trong vai gio.
+  async function uploadToTmpfiles(blob, filename) {
+    const fd = new FormData();
+    fd.append('file', blob, filename);
+    const res = await fetch('https://tmpfiles.org/api/v1/upload', { method: 'POST', body: fd });
+    if (!res.ok) throw new Error('tmpfiles ' + res.status);
+    const j = await res.json();
+    const u = j?.data?.url;
+    if (!u) throw new Error('tmpfiles no url');
+    // /xxx/file.png  ->  /dl/xxx/file.png  (link tai truc tiep)
+    return u.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+  }
+
+  async function uploadToUguu(blob, filename) {
+    const fd = new FormData();
+    fd.append('files[]', blob, filename);
+    const res = await fetch('https://uguu.se/upload', { method: 'POST', body: fd });
+    if (!res.ok) throw new Error('uguu ' + res.status);
+    const j = await res.json();
+    const u = j?.files?.[0]?.url;
+    if (!u) throw new Error('uguu no url');
+    return u;
+  }
+
   async function uploadToLitterbox(blob, filename) {
     const fd = new FormData();
     fd.append('reqtype', 'fileupload');
     fd.append('time', '1h');
     fd.append('fileToUpload', blob, filename);
     const res = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
-      method: 'POST',
-      body: fd
+      method: 'POST', body: fd
     });
-    if (!res.ok) throw new Error('upload failed: ' + res.status);
+    if (!res.ok) throw new Error('litterbox ' + res.status);
     const url = (await res.text()).trim();
-    if (!/^https?:\/\//.test(url)) throw new Error('upload returned invalid url: ' + url);
+    if (!/^https?:\/\//.test(url)) throw new Error('litterbox bad url');
     return url;
+  }
+
+  async function uploadWithFallback(blob, filename) {
+    const providers = [
+      { name: 'tmpfiles', fn: uploadToTmpfiles },
+      { name: 'uguu',     fn: uploadToUguu },
+      { name: 'litterbox', fn: uploadToLitterbox }
+    ];
+    const errors = [];
+    for (const p of providers) {
+      try {
+        const url = await p.fn(blob, filename);
+        console.log(`[dunglook] uploaded via ${p.name}: ${url}`);
+        return url;
+      } catch (e) {
+        console.warn(`[dunglook] ${p.name} failed:`, e);
+        errors.push(`${p.name}: ${e.message}`);
+      }
+    }
+    throw new Error('all providers failed — ' + errors.join(' | '));
   }
 
   function openQrModal() {
@@ -690,7 +734,7 @@
       const blob = await buildPngBlob();
       if (!blob) throw new Error('build PNG failed');
       const filename = `dunglook-${Date.now()}.png`;
-      const url = await uploadToLitterbox(blob, filename);
+      const url = await uploadWithFallback(blob, filename);
       await renderQrIntoWrap(url);
     } catch (e) {
       console.error('[dunglook] QR upload failed:', e);
