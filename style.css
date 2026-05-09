@@ -90,6 +90,21 @@ body {
 .brand:has(.brand-logo) .brand-fallback,
 .brand:has(img) .brand-fallback { display: none; }
 
+.logo-pupil {
+  transform-origin: 87px 43.5px;
+  transform: translate(0, 0);
+  transition: transform 130ms cubic-bezier(.2,.7,.3,1);
+  will-change: transform;
+}
+.logo-eyelid {
+  transform-origin: 87px 0;
+  transform: scaleY(0);
+  transition: transform 110ms ease-in;
+  will-change: transform;
+}
+.logo-eyelid.is-blinking { transform: scaleY(1); }
+.logo-eyelid.is-opening { transition-timing-function: ease-out; transition-duration: 130ms; }
+
 .counter {
   position: absolute;
   right: clamp(16px, 3vw, 50px);

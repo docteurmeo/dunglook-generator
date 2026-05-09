@@ -687,4 +687,81 @@
       console.error('[dunglook] manifest load failed:', e);
     }
   })();
+
+  (function logoEyeAnimation() {
+    const svg = document.getElementById('brandLogoSvg');
+    if (!svg) return;
+    const pupil = svg.querySelector('.logo-pupil');
+    const lid = svg.querySelector('.logo-eyelid');
+    if (!pupil || !lid) return;
+
+    const GAZES = [
+      { x: 0,    y: 0,   weight: 2 },
+      { x: -7,   y: 0,   weight: 3 },
+      { x: 7,    y: 0,   weight: 3 },
+      { x: -6,   y: -3,  weight: 1 },
+      { x: 6,    y: -3,  weight: 1 },
+      { x: 0,    y: 3,   weight: 1 },
+    ];
+    let lastGaze = null;
+    function pickGaze() {
+      const pool = GAZES.filter(g => g !== lastGaze);
+      const total = pool.reduce((s, g) => s + g.weight, 0);
+      let r = Math.random() * total;
+      for (const g of pool) {
+        if ((r -= g.weight) <= 0) { lastGaze = g; return g; }
+      }
+      return pool[0];
+    }
+
+    let blinkTimer = null;
+    let dartTimer = null;
+    let running = false;
+
+    function scheduleBlink() {
+      blinkTimer = setTimeout(doBlink, 5000);
+    }
+    function doBlink() {
+      if (!running) return;
+      lid.classList.remove('is-opening');
+      lid.classList.add('is-blinking');
+      setTimeout(() => {
+        if (!running) return;
+        lid.classList.add('is-opening');
+        lid.classList.remove('is-blinking');
+        setTimeout(() => lid.classList.remove('is-opening'), 160);
+      }, 130);
+      scheduleBlink();
+    }
+
+    function scheduleDart() {
+      const wait = 1500 + Math.random() * 1700;
+      dartTimer = setTimeout(doDart, wait);
+    }
+    function doDart() {
+      if (!running) return;
+      const g = pickGaze();
+      pupil.style.transform = `translate(${g.x}px, ${g.y}px)`;
+      scheduleDart();
+    }
+
+    function start() {
+      if (running) return;
+      running = true;
+      scheduleBlink();
+      scheduleDart();
+    }
+    function stop() {
+      running = false;
+      clearTimeout(blinkTimer);
+      clearTimeout(dartTimer);
+      lid.classList.remove('is-blinking', 'is-opening');
+      pupil.style.transform = 'translate(0,0)';
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop(); else start();
+    });
+    if (!document.hidden) start();
+  })();
 })();
