@@ -5,7 +5,8 @@
 
 @font-face {
   font-family: "BD StreetSign Sans";
-  src: url("fonts/BDStreetSignSans_Variable.ttf") format("truetype-variations"),
+  src: url("fonts/BDStreetSignSans_Variable.woff2") format("woff2"),
+       url("fonts/BDStreetSignSans_Variable.ttf") format("truetype-variations"),
        url("fonts/BDStreetSignSans_Variable.ttf") format("truetype");
   font-weight: 100 900;
   font-style: normal;

@@ -1,17 +1,1 @@
-<svg width="500" height="500" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_70_145)">
-<g clip-path="url(#clip1_70_145)">
-<path d="M461 38H38V461H461V38Z" fill="#5CB94B"/>
-<path d="M282.668 38H216.319V461H282.668V38Z" fill="#FBCD5B"/>
-<path d="M38 216.331L38 282.68H461V216.331L38 216.331Z" fill="#FBCD5B"/>
-</g>
-</g>
-<defs>
-<clipPath id="clip0_70_145">
-<rect width="500" height="500" fill="white"/>
-</clipPath>
-<clipPath id="clip1_70_145">
-<rect width="423" height="423" fill="white" transform="translate(38 38)"/>
-</clipPath>
-</defs>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" fill="none" viewBox="0 0 500 500"><g clip-path="url(#a)"><g clip-path="url(#b)"><path fill="#5cb94b" d="M461 38H38v423h423z"/><path fill="#fbcd5b" d="M282.668 38h-66.349v423h66.349z"/><path fill="#fbcd5b" d="M38 216.331v66.349h423v-66.349z"/></g></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h500v500H0z"/></clipPath><clipPath id="b"><path fill="#fff" d="M38 38h423v423H38z"/></clipPath></defs></svg>

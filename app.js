@@ -20,6 +20,33 @@
   const COUNTER_API = 'https://abacus.jasoncameron.dev';
   const COUNTER_POLL_MS = 4000;  // Cu 4 giay 1 lan dong bo voi server
 
+  const SVG_PARSER = new DOMParser();
+
+  function fetchWithTimeout(url, opts = {}, ms = 10000) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { ...opts, signal: ctrl.signal })
+      .finally(() => clearTimeout(timer));
+  }
+
+  let _qrLibPromise = null;
+  function loadQrLib() {
+    if (_qrLibPromise) return _qrLibPromise;
+    _qrLibPromise = new Promise((resolve, reject) => {
+      if (typeof window.qrcode === 'function') return resolve();
+      const s = document.createElement('script');
+      s.src = 'assets/lib/qrcode.min.js';
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => {
+        _qrLibPromise = null;
+        reject(new Error('qr lib load failed'));
+      };
+      document.head.appendChild(s);
+    });
+    return _qrLibPromise;
+  }
+
   const $ = (id) => document.getElementById(id);
   const CANVAS = $('canvas');
   const CANVAS_WRAP = $('canvasWrap');
@@ -170,10 +197,16 @@
   // Must be embedded in download SVG because Canvas-rendered SVG-as-image
   // runs in a sandbox and can't reach the page's @font-face declarations.
   let _fontDataUrl = null;
+  let _fontMime = 'font/ttf';
   async function getFontDataUrl() {
     if (_fontDataUrl !== null) return _fontDataUrl;
     try {
-      const res = await fetch('fonts/BDStreetSignSans_Variable.ttf');
+      let res = await fetch('fonts/BDStreetSignSans_Variable.woff2').catch(() => null);
+      let mime = 'font/woff2';
+      if (!res || !res.ok) {
+        res = await fetch('fonts/BDStreetSignSans_Variable.ttf');
+        mime = 'font/ttf';
+      }
       if (!res.ok) throw new Error('font fetch failed: ' + res.status);
       const buf = await res.arrayBuffer();
       const bytes = new Uint8Array(buf);
@@ -182,7 +215,8 @@
       for (let i = 0; i < bytes.length; i += CHUNK) {
         binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
       }
-      _fontDataUrl = 'data:font/ttf;base64,' + btoa(binary);
+      _fontDataUrl = `data:${mime};base64,` + btoa(binary);
+      _fontMime = mime;
     } catch (e) {
       console.warn('[dunglook] font embed failed:', e);
       _fontDataUrl = '';
@@ -411,7 +445,7 @@
       const txt = await fetchSvgText(asset.path).catch(() => null);
       if (!txt) continue;
 
-      const doc = new DOMParser().parseFromString(txt, 'image/svg+xml');
+      const doc = SVG_PARSER.parseFromString(txt, 'image/svg+xml');
       const src = doc.documentElement;
       if (src.nodeName.toLowerCase() !== 'svg') continue;
 
@@ -572,9 +606,10 @@
     if (fontUrl) {
       const defs = document.createElementNS(SVG_NS, 'defs');
       const style = document.createElementNS(SVG_NS, 'style');
+      const fmt = _fontMime === 'font/woff2' ? 'woff2' : 'truetype';
       style.textContent =
         '@font-face{font-family:"BD StreetSign Sans";' +
-        'src:url(' + fontUrl + ') format("truetype");' +
+        'src:url(' + fontUrl + ') format("' + fmt + '");' +
         'font-weight:100 900;font-style:normal;}';
       defs.appendChild(style);
       clone.appendChild(defs);
@@ -651,7 +686,7 @@
   async function uploadToTmpfiles(blob, filename) {
     const fd = new FormData();
     fd.append('file', blob, filename);
-    const res = await fetch('https://tmpfiles.org/api/v1/upload', { method: 'POST', body: fd });
+    const res = await fetchWithTimeout('https://tmpfiles.org/api/v1/upload', { method: 'POST', body: fd }, 15000);
     if (!res.ok) throw new Error('tmpfiles ' + res.status);
     const j = await res.json();
     const u = j?.data?.url;
@@ -663,7 +698,7 @@
   async function uploadToUguu(blob, filename) {
     const fd = new FormData();
     fd.append('files[]', blob, filename);
-    const res = await fetch('https://uguu.se/upload', { method: 'POST', body: fd });
+    const res = await fetchWithTimeout('https://uguu.se/upload', { method: 'POST', body: fd }, 15000);
     if (!res.ok) throw new Error('uguu ' + res.status);
     const j = await res.json();
     const u = j?.files?.[0]?.url;
@@ -676,9 +711,9 @@
     fd.append('reqtype', 'fileupload');
     fd.append('time', '1h');
     fd.append('fileToUpload', blob, filename);
-    const res = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
+    const res = await fetchWithTimeout('https://litterbox.catbox.moe/resources/internals/api.php', {
       method: 'POST', body: fd
-    });
+    }, 15000);
     if (!res.ok) throw new Error('litterbox ' + res.status);
     const url = (await res.text()).trim();
     if (!/^https?:\/\//.test(url)) throw new Error('litterbox bad url');
@@ -757,7 +792,10 @@
       const blob = await buildPngBlob();
       if (!blob) throw new Error('build PNG failed');
       const filename = `dunglook-${Date.now()}.png`;
-      const url = await uploadWithFallback(blob, filename);
+      const [url] = await Promise.all([
+        uploadWithFallback(blob, filename),
+        loadQrLib()
+      ]);
       renderQrIntoWrap(url);
     } catch (e) {
       console.error('[dunglook] QR upload failed:', e);

@@ -1,17 +1,1 @@
-<svg width="500" height="500" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_70_484)">
-<g clip-path="url(#clip1_70_484)">
-<path d="M146.522 -0.000799725L107.396 19.8439L222.876 247.409L262.001 227.564L146.522 -0.000799725Z" fill="#1F69AF"/>
-<path d="M232.458 353.631V459.558H150.014V499.987H352.211V459.558H272.897V353.631C266.28 354.512 259.532 355.012 252.678 355.012C245.824 355.012 239.075 354.512 232.458 353.631Z" fill="#1F69AF"/>
-<path d="M83 111.74V270.011C83 354.341 157.998 422.693 250.507 422.693C343.015 422.693 418.013 354.328 418.013 270.011V111.74H83Z" fill="#319ED7"/>
-</g>
-</g>
-<defs>
-<clipPath id="clip0_70_484">
-<rect width="500" height="500" fill="white"/>
-</clipPath>
-<clipPath id="clip1_70_484">
-<rect width="335" height="500" fill="white" transform="translate(83)"/>
-</clipPath>
-</defs>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" fill="none" viewBox="0 0 500 500"><g clip-path="url(#a)"><g clip-path="url(#b)"><path fill="#1f69af" d="m146.522 0-39.126 19.844 115.48 227.565 39.125-19.845zm85.936 353.631v105.927h-82.444v40.429h202.197v-40.429h-79.314V353.631c-6.617.881-13.365 1.381-20.219 1.381s-13.603-.5-20.22-1.381"/><path fill="#319ed7" d="M83 111.74v158.271c0 84.33 74.998 152.682 167.507 152.682 92.508 0 167.506-68.365 167.506-152.682V111.74z"/></g></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h500v500H0z"/></clipPath><clipPath id="b"><path fill="#fff" d="M83 0h335v500H83z"/></clipPath></defs></svg>
