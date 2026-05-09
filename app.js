@@ -507,11 +507,23 @@
     GEN_LABEL.textContent = 'Generating';
     CANVAS_WRAP.dataset.state = 'generating';
 
-    // Speed curve: start fast (40ms), accelerate slightly, then slow down
-    const frames = [120, 105, 105, 120, 150, 200, 275, 395, 545, 730, 975, 1280];
+    // Speed curve: shuffle nhanh (~40ms) gan het animation, roi ease-in giam toc muot
+    // Tong thoi gian ~5000ms. Dung power curve de gia toc smooth, khong giat.
+    const totalMs = 5000;
+    const minDelay = 40;
+    const maxDelay = 460;
+    const frames = [];
+    let elapsed = 0;
+    while (elapsed < totalMs) {
+      const t = Math.min(1, elapsed / totalMs);
+      const eased = Math.pow(t, 4); // ease-in quart: gan nhu phang luc dau, slow down cuoi
+      const delay = minDelay + (maxDelay - minDelay) * eased;
+      frames.push(delay);
+      elapsed += delay;
+    }
     for (let i = 0; i < frames.length; i++) {
       await renderRandom({ finalized: false });
-      playTick(i / (frames.length - 1));
+      playTick(i / Math.max(1, frames.length - 1));
       await new Promise((r) => setTimeout(r, frames[i]));
     }
 
