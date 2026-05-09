@@ -459,11 +459,11 @@
 
     // 3 dong cung font size 48, spacing deu (~8px gap giua cac dong)
     if (text.prefix) {
-      svg.appendChild(mkText(text.prefix, tFrame.y + 10, 48, text.prefixColor, false));
+      svg.appendChild(mkText(text.prefix, tFrame.y + 30, 48, text.prefixColor, false));
     }
-    svg.appendChild(mkText(text.core, tFrame.y + 66, 48, coreColor, false));
+    svg.appendChild(mkText(text.core, tFrame.y + 84, 48, coreColor, false));
     if (text.suffix) {
-      svg.appendChild(mkText(text.suffix, tFrame.y + 122, 48, text.suffixColor, false));
+      svg.appendChild(mkText(text.suffix, tFrame.y + 138, 48, text.suffixColor, false));
     }
 
     return svg;
