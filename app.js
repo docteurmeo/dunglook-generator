@@ -714,16 +714,39 @@
     QR_WRAP.innerHTML = '';
   }
 
-  async function renderQrIntoWrap(url) {
+  function renderQrIntoWrap(url) {
     QR_WRAP.innerHTML = '';
+    if (typeof window.qrcode !== 'function') {
+      QR_WRAP.innerHTML = '<div class="qr-error">Lib QR chưa tải xong.</div>';
+      return;
+    }
+    const qr = window.qrcode(0, 'M');
+    qr.addData(url);
+    qr.make();
+    const count = qr.getModuleCount();
+    const margin = 2;
+    const size = 260;
+    const cell = size / (count + margin * 2);
     const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = '#050505';
+    for (let r = 0; r < count; r++) {
+      for (let c = 0; c < count; c++) {
+        if (qr.isDark(r, c)) {
+          ctx.fillRect(
+            Math.floor((c + margin) * cell),
+            Math.floor((r + margin) * cell),
+            Math.ceil(cell),
+            Math.ceil(cell)
+          );
+        }
+      }
+    }
     QR_WRAP.appendChild(canvas);
-    await window.QRCode.toCanvas(canvas, url, {
-      width: 260,
-      margin: 1,
-      errorCorrectionLevel: 'M',
-      color: { dark: '#050505', light: '#ffffff' }
-    });
   }
 
   async function downloadByQr() {
@@ -735,7 +758,7 @@
       if (!blob) throw new Error('build PNG failed');
       const filename = `dunglook-${Date.now()}.png`;
       const url = await uploadWithFallback(blob, filename);
-      await renderQrIntoWrap(url);
+      renderQrIntoWrap(url);
     } catch (e) {
       console.error('[dunglook] QR upload failed:', e);
       QR_WRAP.innerHTML = '<div class="qr-error">Tải lên thất bại. Vui lòng thử lại.</div>';
