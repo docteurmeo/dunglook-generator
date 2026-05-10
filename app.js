@@ -741,12 +741,20 @@
   }
 
   function openQrModal() {
+    QR_MODAL.removeAttribute('data-state');
     QR_MODAL.classList.remove('hidden');
+    // Reset entrance animations bang cach force reflow
+    QR_MODAL.offsetWidth;
     QR_WRAP.innerHTML = '<div class="qr-loading">Đang tải lên…</div>';
   }
   function closeQrModal() {
-    QR_MODAL.classList.add('hidden');
-    QR_WRAP.innerHTML = '';
+    if (QR_MODAL.classList.contains('hidden')) return;
+    QR_MODAL.dataset.state = 'closing';
+    setTimeout(() => {
+      QR_MODAL.classList.add('hidden');
+      QR_MODAL.removeAttribute('data-state');
+      QR_WRAP.innerHTML = '';
+    }, 280);
   }
 
   function renderQrIntoWrap(url) {
@@ -828,7 +836,7 @@
   DL_PNG.addEventListener('click', () => { playClick(); downloadPng(); });
   DL_QR.addEventListener('click', () => { playClick(); downloadByQr(); });
   QR_MODAL.addEventListener('click', (e) => {
-    if (e.target.dataset && 'qrClose' in e.target.dataset) closeQrModal();
+    if (e.target.closest('[data-qr-close]')) closeQrModal();
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !QR_MODAL.classList.contains('hidden')) closeQrModal();

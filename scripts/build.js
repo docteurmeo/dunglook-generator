@@ -16,6 +16,7 @@ function listLayerFolders() {
     .readdirSync(ASSETS_DIR, { withFileTypes: true })
     .filter((d) => d.isDirectory())
     .map((d) => d.name)
+    .filter((name) => !name.startsWith('_') && !name.startsWith('.') && /^\d/.test(name))
     .sort();
 }
 

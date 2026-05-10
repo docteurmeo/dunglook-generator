@@ -78,13 +78,37 @@
 
   <div id="qrModal" class="qr-modal hidden" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
     <div class="qr-modal-backdrop" data-qr-close></div>
-    <div class="qr-modal-card">
-      <button class="qr-modal-close" type="button" data-qr-close aria-label="Đóng">×</button>
-      <h2 id="qrTitle" class="qr-modal-title">Quét QR để tải về điện thoại</h2>
-      <div id="qrCanvasWrap" class="qr-canvas-wrap" aria-live="polite">
-        <div class="qr-loading">Đang tải lên…</div>
+    <div class="qr-modal-stage">
+      <!-- Confetti & stars (behind hand) -->
+      <div class="qr-deco qr-confetti-1"><img src="assets/popup/confetti1.svg" alt="" /></div>
+      <div class="qr-deco qr-confetti-2"><img src="assets/popup/confetti2.svg" alt="" /></div>
+      <div class="qr-deco qr-confetti-3"><img src="assets/popup/confetti3.svg" alt="" /></div>
+      <div class="qr-deco qr-star-1"><img src="assets/popup/star1.svg" alt="" /></div>
+      <div class="qr-deco qr-star-2"><img src="assets/popup/star2.svg" alt="" /></div>
+
+      <!-- Hand + phone (animated together) -->
+      <div class="qr-handphone">
+        <img class="qr-backhand" src="assets/popup/backhand.svg" alt="" />
+        <img class="qr-mobile" src="assets/popup/mobile.svg" alt="" />
+
+        <!-- Phone screen content -->
+        <h2 id="qrTitle" class="qr-title">Quét QR để tải về điện thoại</h2>
+        <div id="qrCanvasWrap" class="qr-canvas-wrap" aria-live="polite">
+          <div class="qr-loading">Đang tải lên…</div>
+        </div>
+        <p class="qr-hint">Link có hiệu lực trong 1 giờ</p>
+
+        <!-- Close button -->
+        <button class="qr-close-btn" type="button" data-qr-close aria-label="Đóng">
+          <span class="qr-close-x"></span>
+          <span class="qr-close-x"></span>
+        </button>
+
+        <!-- Thumb (in front of phone) -->
+        <div class="qr-thumb-wrap">
+          <img class="qr-thumb" src="assets/popup/thumb.svg" alt="" />
+        </div>
       </div>
-      <p class="qr-modal-hint">Link có hiệu lực trong 1 giờ</p>
     </div>
   </div>
 
