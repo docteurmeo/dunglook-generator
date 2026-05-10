@@ -52,20 +52,31 @@ function readTexts() {
   }
   const wb = XLSX.readFile(xlsxPath);
   const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+  // Read as raw 2D array — columns positional (TOPIC | A/prefix | core | B/suffix)
+  // Tuong thich voi Google Sheet "Final" cua DUNG LOOK: cot 0 = topic (forward-fill khi
+  // empty), cot 1 = prefix, cot 3 = suffix. Bo qua dong header (chua \n hoac dau ngoac).
+  const matrix = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', blankrows: false });
 
-  // Group by topic, preserving insertion order.
-  // Columns: topic | prefix | suffix
   const topicMap = new Map();
-  for (const row of rows) {
-    const topicName = String(row.topic || '').trim();
-    const prefix    = String(row.prefix  || '').trim();
-    const suffix    = String(row.suffix  || '').trim();
-    if (!topicName) continue;
-    if (!topicMap.has(topicName)) {
-      topicMap.set(topicName, { name: topicName, prefix: [], suffix: [] });
+  let currentTopic = '';
+  const isHeaderCell = (s) => /[()\n]|Động từ|Tính từ|CẤU TRÚC|^A\b|^B\b/i.test(s);
+  const isHeaderTopic = (s) => /^TOPIC$|CẤU TRÚC/i.test(s);
+
+  for (const row of matrix) {
+    const topicCell = String(row[0] || '').trim();
+    const prefix    = String(row[1] || '').trim();
+    const suffix    = String(row[3] || '').trim();
+
+    if (topicCell && !isHeaderTopic(topicCell)) currentTopic = topicCell;
+    else if (isHeaderTopic(topicCell)) continue;
+    if (!currentTopic) continue;
+    if (isHeaderCell(prefix) || isHeaderCell(suffix)) continue;
+    if (!prefix && !suffix) continue;
+
+    if (!topicMap.has(currentTopic)) {
+      topicMap.set(currentTopic, { name: currentTopic, prefix: [], suffix: [] });
     }
-    const t = topicMap.get(topicName);
+    const t = topicMap.get(currentTopic);
     if (prefix && !t.prefix.includes(prefix)) t.prefix.push(prefix);
     if (suffix && !t.suffix.includes(suffix)) t.suffix.push(suffix);
   }

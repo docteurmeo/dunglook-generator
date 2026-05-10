@@ -1,1 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" fill="none" viewBox="0 0 500 500"><g clip-path="url(#Base_13_svg_clip0_70_124)"><g clip-path="url(#Base_13_svg_clip1_70_124)"><path fill="#5cb94b" d="M460 39H39v421h421z"/><path fill="#fbcd5b" d="M118.92 39H94.377v421h24.543z"/><path fill="#fbcd5b" d="M404.623 39H380.08v421h24.543z"/><path fill="#fbcd5b" d="M39 380.08v24.543h421V380.08z"/><path fill="#fbcd5b" d="M39 94.377v24.543h421V94.377z"/></g></g><defs><clipPath id="Base_13_svg_clip0_70_124"><rect width="500" height="500" fill="#fff"/></clipPath><clipPath id="Base_13_svg_clip1_70_124"><rect width="421" height="421" fill="#fff" transform="translate(39 39)"/></clipPath></defs></svg>
+<svg width="500" height="500" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_70_124)">
+<path d="M460 39H39V460H460V39Z" fill="#5CB94B"/>
+<path d="M118.92 39H94.377V460H118.92V39Z" fill="#FBCD5B"/>
+<path d="M404.623 39H380.08V460H404.623V39Z" fill="#FBCD5B"/>
+<path d="M39 380.08V404.623H460V380.08H39Z" fill="#FBCD5B"/>
+<path d="M39 94.377V118.92L460 118.92V94.377L39 94.377Z" fill="#FBCD5B"/>
+</g>
+<defs>
+<clipPath id="clip0_70_124">
+<rect width="421" height="421" fill="white" transform="translate(39 39)"/>
+</clipPath>
+</defs>
+</svg>

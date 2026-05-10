@@ -1,1 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" fill="none" viewBox="0 0 500 500"><g clip-path="url(#Base_32_svg_clip0_70_410)"><g clip-path="url(#Base_32_svg_clip1_70_410)"><path fill="#5cb94b" d="M126.157 126.157C.303 252.012 22.496 478.279 22.527 478.472L478.473 22.528S252.06.255 126.157 126.157"/><path fill="#3e962c" d="M374.842 374.843C500.697 248.972 478.488 22.656 478.472 22.528L22.527 478.472c.193.016 226.461 22.225 352.315-103.629"/></g></g><defs><clipPath id="Base_32_svg_clip0_70_410"><rect width="500" height="500" fill="#fff"/></clipPath><clipPath id="Base_32_svg_clip1_70_410"><rect width="459" height="459" fill="#fff" transform="translate(21 21)"/></clipPath></defs></svg>
+<svg width="500" height="500" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_70_410)">
+<path d="M126.157 126.157C0.303009 252.012 22.4956 478.279 22.5277 478.472L478.472 22.5277C478.472 22.5277 252.06 0.254772 126.157 126.157Z" fill="#5CB94B"/>
+<path d="M374.842 374.843C500.697 248.972 478.488 22.6564 478.472 22.5278L22.5273 478.472C22.7203 478.488 248.988 500.697 374.842 374.843Z" fill="#3E962C"/>
+</g>
+<defs>
+<clipPath id="clip0_70_410">
+<rect width="459" height="459" fill="white" transform="translate(21 21)"/>
+</clipPath>
+</defs>
+</svg>
