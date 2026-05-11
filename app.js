@@ -353,11 +353,17 @@
       const sz = layer.renderSize || { width: 140, height: 140 };
       const c = layer.container || { left: 100, top: 0, width: 500, height: 500 };
       const pad = layer.padding ?? 60;
+      const midX = c.left + (c.width - sz.width) / 2;
+      const midY = c.top + (c.height - sz.height) / 2;
       const corners = [
         { x: c.left + pad,                       y: c.top + pad },
         { x: c.left + c.width - sz.width - pad,  y: c.top + pad },
         { x: c.left + pad,                       y: c.top + c.height - sz.height - pad },
-        { x: c.left + c.width - sz.width - pad,  y: c.top + c.height - sz.height - pad }
+        { x: c.left + c.width - sz.width - pad,  y: c.top + c.height - sz.height - pad },
+        { x: midX,                               y: c.top + pad },
+        { x: midX,                               y: c.top + c.height - sz.height - pad },
+        { x: c.left + pad,                       y: midY },
+        { x: c.left + c.width - sz.width - pad,  y: midY }
       ];
       const corner = pickRandom(corners);
       const rot = layer.rotation || { mode: 'continuous', min: -45, max: 45 };

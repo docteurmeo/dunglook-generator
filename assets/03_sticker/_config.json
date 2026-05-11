@@ -3,7 +3,7 @@
   "order": 3,
   "behavior": "random_corner",
   "required": false,
-  "probability": 0.85,
+  "probability": 1.0,
   "viewBox": "0 0 140 140",
   "renderSize": { "width": 140, "height": 140 },
   "padding": 60,
