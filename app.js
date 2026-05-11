@@ -362,7 +362,6 @@
         { x: c.left + c.width - sz.width - pad,  y: c.top + c.height - sz.height - pad },
         { x: midX,                               y: c.top + pad },
         { x: midX,                               y: c.top + c.height - sz.height - pad },
-        { x: c.left + pad,                       y: midY },
         { x: c.left + c.width - sz.width - pad,  y: midY }
       ];
       const corner = pickRandom(corners);
