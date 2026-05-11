@@ -464,7 +464,8 @@
       bg.setAttribute('y', '0');
       bg.setAttribute('width', String(ART_W));
       bg.setAttribute('height', String(ART_H));
-      bg.setAttribute('fill', '#d3e8f0');
+      const bgPalette = ['#DEF6FF', '#E9FFE4', '#FFE3E7', '#FFFBE2', '#F7E2FF'];
+      bg.setAttribute('fill', pickRandom(bgPalette));
       svg.appendChild(bg);
     }
 
