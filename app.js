@@ -184,6 +184,28 @@
     return res.json();
   }
 
+  // Warm svgCache ngay sau khi manifest load xong.
+  // Chay nen, khong block UI — auto-shuffle van chay voi nhung gi da cache,
+  // sau ~1-2s toan bo asset da nam trong RAM → generate mượt 100%.
+  // Giới hạn concurrency để khong nghen connection pool cua browser.
+  function preloadAllSvgs(manifest) {
+    const paths = [];
+    for (const layer of manifest.layers || []) {
+      for (const asset of layer.assets || []) {
+        if (asset?.path && !state.svgCache.has(asset.path)) paths.push(asset.path);
+      }
+    }
+    const CONCURRENCY = 6;
+    let i = 0;
+    const worker = async () => {
+      while (i < paths.length) {
+        const p = paths[i++];
+        try { await fetchSvgText(p); } catch {}
+      }
+    };
+    for (let k = 0; k < CONCURRENCY; k++) worker();
+  }
+
   async function fetchSvgText(p) {
     if (state.svgCache.has(p)) return state.svgCache.get(p);
     const res = await fetch(p);
@@ -867,6 +889,7 @@
       }
       await renderRandom({ finalized: false });
       startAutoShuffle();
+      preloadAllSvgs(state.manifest);
     } catch (e) {
       console.error('[dunglook] manifest load failed:', e);
     }
